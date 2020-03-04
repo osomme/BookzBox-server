@@ -16,15 +16,16 @@ exports.onBoxUploaded = functions.firestore
         const boxId = snapshot.id;
         console.log(`New box added with ID: ${boxId}, contents: ${box}`);
         // Add mapped box to map_boxes collection
-        await mapBoxesRef.doc(boxId)
+        const mapBoxes = mapBoxesRef.doc(boxId)
             .set(boxToMapBoxItem(box));
         // Add mapped box to publishers' profile
-        await usersRef.doc(box.publisher)
+        const userBoxes = usersRef.doc(box.publisher)
             .collection('boxes')
             .doc(boxId)
             .set(boxToProfileBoxItem(box));
         // Add mapped box to box feed collection
-        return boxFeedRef.doc(boxId).set(boxToFeedBoxItem(box));
+        const boxFeed = boxFeedRef.doc(boxId).set(boxToFeedBoxItem(box));
+        return Promise.all([mapBoxes, userBoxes, boxFeed]);
     });
 
 /**
@@ -39,9 +40,10 @@ exports.onBoxUpdate = functions.firestore
         const publisherId = change.after.data().publisher;
         console.log(`Updating box status for box with ID: ${boxId}, new status: ${boxStatus}`);
 
-        await updateBoxStatus(mapBoxesRef.doc(boxId), boxStatus);
-        await updateBoxStatus(usersRef.doc(publisherId).collection('boxes').doc(boxId), boxStatus);
-        return updateBoxStatus(boxFeedRef.doc(boxId), boxStatus);
+        const mapBoxes = updateBoxStatus(mapBoxesRef.doc(boxId), boxStatus);
+        const userBoxes = updateBoxStatus(usersRef.doc(publisherId).collection('boxes').doc(boxId), boxStatus);
+        const boxFeed = updateBoxStatus(boxFeedRef.doc(boxId), boxStatus);
+        return Promise.all([mapBoxes, userBoxes, boxFeed]);
         //TODO: Remove likes belonging to a box if the new status is NOT active.
     });
 
