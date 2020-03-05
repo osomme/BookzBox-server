@@ -2,16 +2,19 @@ const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
 
-const mapBoxesRef = admin.firestore().collection('map_boxes');
-const usersRef = admin.firestore().collection('users');
-const boxFeedRef = admin.firestore().collection('feed_boxes');
+const firestore = admin.firestore();
+const mapBoxesRef = firestore.collection('map_boxes');
+const usersRef = firestore.collection('users');
+const boxFeedRef = firestore.collection('feed_boxes');
+const likesRef = firestore.collection('likes');
+const boxesRef = firestore.collection('boxes');
 
 /**
  * Listens for new boxes on the /boxes/ collection and creates derived versions.
  */
 exports.onBoxUploaded = functions.firestore
     .document('/boxes/{box}')
-    .onCreate(async (snapshot, _) => {
+    .onCreate((snapshot, _) => {
         const box = snapshot.data();
         const boxId = snapshot.id;
         console.log(`New box added with ID: ${boxId}, contents: ${box}`);
@@ -34,7 +37,7 @@ exports.onBoxUploaded = functions.firestore
  */
 exports.onBoxUpdate = functions.firestore
     .document('/boxes/{box}')
-    .onUpdate(async (change, _) => {
+    .onUpdate((change, _) => {
         const boxId = change.after.id;
         const boxStatus = change.after.data().status;
         const publisherId = change.after.data().publisher;
@@ -43,8 +46,83 @@ exports.onBoxUpdate = functions.firestore
         const mapBoxes = updateBoxStatus(mapBoxesRef.doc(boxId), boxStatus);
         const userBoxes = updateBoxStatus(usersRef.doc(publisherId).collection('boxes').doc(boxId), boxStatus);
         const boxFeed = updateBoxStatus(boxFeedRef.doc(boxId), boxStatus);
-        return Promise.all([mapBoxes, userBoxes, boxFeed]);
-        //TODO: Remove likes belonging to a box if the new status is NOT active.
+
+        // Delete likes and activity data related to the box, if it is no longer visible.
+        const likes = boxStatus !== 0 ? likesRef.where('boxId', '==', boxId).get()
+            .then(likes => likes.forEach(like => like.ref.delete())) : Promise.resolve();
+
+        return Promise.all([mapBoxes, userBoxes, boxFeed, likes]);
+    });
+
+
+exports.onLikeUploaded = functions.firestore
+    .document('/likes/{like}')
+    .onCreate(async (snapshot, context) => {
+        const likedById = snapshot.data().likedByUserId;
+        const boxId = snapshot.data().boxId;
+        const timestamp = snapshot.data().timestamp;
+        console.log(`[NEW LIKE] liked by: ${likedById}, boxId: ${boxId}`);
+
+        const likedByUser = await usersRef.doc(likedById).get();
+        const box = await boxesRef.doc(boxId).get();
+        const boxOwnerId = box.data().publisher;
+        const userActivityFeed = await usersRef
+            .doc(boxOwnerId)
+            .collection('activity')
+            .add({
+                timestamp: timestamp,
+                read: false,
+                typename: 'like',
+                data: {
+                    likedByUserId: likedById,
+                    likedByUsername: likedByUser.data().displayName,
+                    boxTitle: box.data().title,
+                    boxId: boxId
+                }
+            });
+
+        const activityReference = snapshot.ref.set({
+            activityFeedReference: userActivityFeed.id
+        }, {
+            merge: true
+        });
+
+        const userLikedFeed = usersRef
+            .doc(likedById)
+            .collection('liked_boxes')
+            .doc(boxId)
+            .set({
+                status: box.data().status,
+                publishDateTime: box.data().publishDateTime,
+                title: box.data().title,
+                bookThumbnailUrl: box.data().books[0].thumbnailUrl
+            });
+
+        return Promise.all([userLikedFeed, activityReference]);
+    });
+
+exports.onLikeDeleted = functions.firestore
+    .document('/likes/{like}')
+    .onDelete(async (snapshot, context) => {
+        const likedById = snapshot.data().likedByUserId;
+        const boxId = snapshot.data().boxId;
+        console.log(`[DELETING LIKE] liked by: ${likedById}, boxId: ${boxId}`);
+
+        const box = await boxesRef.doc(boxId).get();
+        const boxOwnerId = box.data().publisher;
+        const userActivityFeed = usersRef
+            .doc(boxOwnerId)
+            .collection('activity')
+            .doc(snapshot.data().activityFeedReference)
+            .delete();
+
+        const userLikedFeed = usersRef
+            .doc(likedById)
+            .collection('liked_boxes')
+            .doc(boxId)
+            .delete();
+
+        return Promise.all([userActivityFeed, userLikedFeed]);
     });
 
 async function updateBoxStatus(docRef, status) {
