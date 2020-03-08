@@ -251,6 +251,45 @@ exports.onLikeDeleted = functions.firestore
         return Promise.all([userActivityFeed, userLikedFeed]);
     });
 
+/**
+ * Updates the activity item for a particular chat for both participants in the chat.
+ */
+exports.onMessagePosted = functions.firestore
+    .document('/matches/{match}/messages/{message}')
+    .onCreate(async (snapshot, context) => {
+        const matchId = context.params.match;
+        const message = snapshot.data();
+
+        const match = await matchRef.doc(matchId).get();
+        const [user1, user2] = await Promise.all(match.data().participants.map(uid => usersRef.doc(uid).get()));
+
+        return Promise.all([
+            updateChatActivityItem(user1.data(), user2.data(), matchId, message),
+            updateChatActivityItem(user2.data(), user1.data(), matchId, message)
+        ]);
+    });
+
+/**
+ * 
+ * @param {Object} activityOwner The owner of the activity that is being updated
+ * @param {Object} otherChatUser The user that the owner is chatting with
+ * @param {String} matchId The match ID belonging to the match between the two users
+ * @param {String} message The actual content of the newest message in the chat
+ */
+async function updateChatActivityItem(activityOwner, otherChatUser, matchId, message) {
+    return usersRef.doc(activityOwner.uid).collection('activity').doc(matchId).set({
+        read: false,
+        timestamp: message.timestamp,
+        data: {
+            lastMessage: message.content,
+            otherUserName: otherChatUser.displayName,
+            otherUserThumbnail: otherChatUser.photoURL
+        }
+    }, {
+        merge: true
+    });
+}
+
 async function updateBoxStatus(docRef, status) {
     return docRef.set({
         status: status
