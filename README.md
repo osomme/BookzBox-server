@@ -34,6 +34,12 @@ Protocol: HTTP GET
 
 Uri: /api/like?key=KEY&userId=USER_ID&boxId=BOX_ID
 
+<b>Get recommendations</b>   
+Protocol: HTTP GET
+
+URI: api/recommendations?key=KEY&userId=USER_ID
+
+Returns: list of boxes (feed boxes)
 
 
 #### Database software- Neo4j
