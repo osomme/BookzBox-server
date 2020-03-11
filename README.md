@@ -5,6 +5,36 @@
 ## Recommender system
 
 #### Server software- ASP.NET Core
+<b>Port:</b> 5000
+
+<b>Add box</b>   
+Protocol: HTTP POST
+
+Uri: /api/box?key=KEY
+
+Body:   
+{
+	"Id": "box10",
+	"PublisherId": "user10",
+	"PublishedOn": "01-01-2019",
+	"Title": "A box",
+	"Books": [ { "ThumbnailUrl": "URL", "Subjects": [ "Fiction", "Sci-Fi" ] } ],
+	"Status": 1
+}
+
+<b>Add user</b>   
+Protocol: HTTP POST
+
+Uri: /api/users?key=KEY
+
+Body: { "Id": " " }
+
+<b>Like</b>   
+Protocol: HTTP GET
+
+Uri: /api/like?key=KEY&userId=USER_ID&boxId=BOX_ID
+
+
 
 #### Database software- Neo4j
 <b>System requirements: </b>
