@@ -1,3 +1,5 @@
+using System;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using BooxBox.DataAccess.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -43,5 +45,22 @@ namespace BookzBox.Controllers
             await _boxRepo.AddAsync(box);
             return Ok();
         }
+
+        [HttpPut("api/box/status")]
+        public async Task<IActionResult> UpdateStatusAsync([FromQuery] string key, [Required] string boxId, [Required] int status)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            if (!ApiKey.IsValid(key))
+            {
+                return Forbid();
+            }
+            await _boxRepo.UpdateStatusAsync(boxId, (BoxStatus)status);
+            return Ok();
+        }
+
     }
 }

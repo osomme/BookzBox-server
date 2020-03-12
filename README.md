@@ -34,6 +34,11 @@ Protocol: HTTP GET
 
 Uri: /api/like?key=KEY&userId=USER_ID&boxId=BOX_ID
 
+<b>Update status</b>
+Protocol: HTTP PUT
+
+Uri: /api/box/status?key=KEY&boxId=BOX_ID&status=NEW_BOX_STATUS
+
 <b>Get recommendations</b>   
 Protocol: HTTP GET
 

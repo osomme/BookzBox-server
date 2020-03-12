@@ -36,6 +36,21 @@ namespace BooxBox.DataAccess.Repositories
             }
         }
 
+        public async Task UpdateStatusAsync(string boxId, BoxStatus newStatus)
+        {
+            try
+            {
+                IResultCursor cursor = await _database.Session.RunAsync(
+                    $"MATCH (b:Box {{boxId: '{boxId}'}}) SET b.status = {(int)newStatus}"
+                );
+                await cursor.ConsumeAsync();
+            }
+            finally
+            {
+                await _database.CloseSessionAsync();
+            }
+        }
+
         /// Adds the box node to the database.
         private async Task AddBoxNodeAsync(Box box)
         {
@@ -51,5 +66,6 @@ namespace BooxBox.DataAccess.Repositories
                 await _database.CloseSessionAsync();
             }
         }
+
     }
 }
