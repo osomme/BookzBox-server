@@ -9,6 +9,8 @@ const boxFeedRef = firestore.collection('feed_boxes');
 const likesRef = firestore.collection('likes');
 const boxesRef = firestore.collection('boxes');
 const matchRef = firestore.collection('matches');
+const recommenderApiKey = 'lUTd2jfk45lloEv9a1dff4ZxX';
+const recommenderApiUrl = 'https://localhost:5000/api/'; // TODO: update with actual url
 
 /**
  * Listens for new boxes on the /boxes/ collection and creates derived versions.
@@ -29,6 +31,12 @@ exports.onBoxUploaded = functions.firestore
             .set(boxToProfileBoxItem(box));
         // Add mapped box to box feed collection
         const boxFeed = boxFeedRef.doc(boxId).set(boxToFeedBoxItem(box));
+        Request.post({ url: recommenderApiUrl + 'box?key=' + recommenderApiKey, formData: boxFeed },
+            function optionalCallback(err, httpResponse, body) {
+                if (err) {
+                    return console.error('Uploading box to recommender system failed: ', err);
+                }
+            });
         return Promise.all([mapBoxes, userBoxes, boxFeed]);
     });
 
