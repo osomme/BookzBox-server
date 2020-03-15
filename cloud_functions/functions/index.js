@@ -85,6 +85,8 @@ exports.onLikeUploaded = functions.firestore
         const userLikedFeed = addToLikerActivityFeed(likedById, boxId, box, boxOwnerId);
         const matchCheck = checkForPotentialMatch(boxOwnerId, likedById, timestamp, boxOwnerUser, likedByUser);
 
+        likeBoxInRecommendationSys(boxId, likedById);
+
         return Promise.all([userLikedFeed, ownerActivityFeed, matchCheck]);
     });
 
@@ -363,5 +365,18 @@ function updateBoxStatusInRecommendationSys(boxId, boxStatus) {
     Request.put(recommenderApiUrl + 'box/status?key=' + recommenderApiKey + '&boxId=' + boxId + '&status=' + boxStatus)
         .on('error', function (err) {
             console.error(`Failed to update box status in recommender system: ${err}`);
+        });
+}
+
+/**
+ * Calls the like endpoint of the recommender API.
+ *  
+ * @param {String} boxId Id of the box that was liked. 
+ * @param {String} userId The id of the user of which liked the box.
+ */
+function likeBoxInRecommendationSys(boxId, userId) {
+    Request.get(`${recommenderApiUrl}like?key=${recommenderApiKey}&userId=${userId}&boxId=${boxId}`)
+        .on('error', function (err) {
+            console.error(`Failed to send box like to recommendation system: ${err}`);
         });
 }
