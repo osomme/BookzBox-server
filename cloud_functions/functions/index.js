@@ -31,12 +31,8 @@ exports.onBoxUploaded = functions.firestore
             .set(boxToProfileBoxItem(box));
         // Add mapped box to box feed collection
         const boxFeed = boxFeedRef.doc(boxId).set(boxToFeedBoxItem(box));
-        Request.post({ url: recommenderApiUrl + 'box?key=' + recommenderApiKey, formData: boxFeed },
-            function optionalCallback(err, httpResponse, body) {
-                if (err) {
-                    return console.error('Uploading box to recommender system failed: ', err);
-                }
-            });
+        uploadBoxToRecommendationSys(boxFeed);
+
         return Promise.all([mapBoxes, userBoxes, boxFeed]);
     });
 
@@ -59,6 +55,9 @@ exports.onBoxUpdate = functions.firestore
         // Delete likes and activity data related to the box, if it is no longer visible.
         const likes = boxStatus !== 0 ? likesRef.where('boxId', '==', boxId).get()
             .then(likes => likes.forEach(like => like.ref.delete())) : Promise.resolve();
+
+
+        updateBoxStatusInRecommendationSys(boxId, boxStatus);
 
         return Promise.all([mapBoxes, userBoxes, boxFeed, likes]);
     });
@@ -349,4 +348,20 @@ function boxToFeedBoxItem(box) {
             }
         })
     };
+}
+
+function uploadBoxToRecommendationSys(boxFeedItem) {
+    Request.post({ url: recommenderApiUrl + 'box?key=' + recommenderApiKey, formData: boxFeedItem },
+        function optionalCallback(err, httpResponse, body) {
+            if (err) {
+                return console.error('Uploading box to recommender system failed: ', err);
+            }
+        });
+}
+
+function updateBoxStatusInRecommendationSys(boxId, boxStatus) {
+    Request.put(recommenderApiUrl + 'box/status?key=' + recommenderApiKey + '&boxId=' + boxId + '&status=' + boxStatus)
+        .on('error', function (err) {
+            console.error(`Failed to update box status in recommender system: ${err}`);
+        });
 }
