@@ -46,6 +46,13 @@ URI: api/recommendations?key=KEY&userId=USER_ID
 
 Returns: list of boxes (feed boxes)
 
+<b>Set/Update preferences</b>   
+Protocol: HTTP PUT
+
+URI: /api/preferences?key=KEY&userId=USER_ID
+
+Body: { "Subjects" : [ "Fiction", "Romance" ] }
+
 
 #### Database software- Neo4j
 <b>System requirements: </b>

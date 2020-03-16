@@ -6,7 +6,7 @@ namespace BooxBox.DataAccess
     public class Database : IDatabase
     {
         private static string DB_URI = "neo4j://localhost:7687";
-        private static string DB_NAME = "graph.db";
+        private static string DB_NAME = "neo4j";
 
         private IDriver _driver;
 

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using BooxBox.DataAccess.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +40,9 @@ namespace BookzBox.Controllers
             }
 
             await _userRepository.AddAsync(user);
+
             return Ok();
         }
+
     }
 }
