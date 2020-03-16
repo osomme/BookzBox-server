@@ -91,6 +91,19 @@ exports.onLikeUploaded = functions.firestore
     });
 
 /**
+ * Listens for updates on the user.
+ */
+exports.onUserUpdate = functions.firestore
+    .document('users/{user}')
+    .onUpdate((change, _) => {
+        const userId = change.after.id;
+        const subjects = change.after.favoriteGenres;
+
+        updatePreferedSubjectsInRecommendationSys(userId, subjects);
+
+    });
+
+/**
  * Checks to see if there is a match between two users.
  * 1. Checks if both users have liked each others boxes
  * 2. If yes, then check if they do not already have an active match.
@@ -379,4 +392,32 @@ function likeBoxInRecommendationSys(boxId, userId) {
         .on('error', function (err) {
             console.error(`Failed to send box like to recommendation system: ${err}`);
         });
+}
+
+/**
+ * Updates the prefered book subjects by passing the subjects to the
+ * recommendation system API.
+ * 
+ * @param {String} userId The id of the user of whom to update for. 
+ * @param {Array} subjects An array of book subjects 
+ */
+function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
+    request({
+        method: 'PUT',
+        preambleCRLF: true,
+        postambleCRLF: true,
+        uri: recommenderApiUrl + 'preferences?key=' + recommenderApiKey + '&userId=' + userId,
+        multipart: [
+            {
+                'content-type': 'application/json',
+                body: '"Subjects":' + JSON.stringify(subjects)
+            }
+        ],
+        function(error, response, body) {
+            if (error) {
+                return console.error(`Failed to update user preferences in recommender system: ${error}`);
+            }
+
+        }
+    });
 }
