@@ -17,16 +17,11 @@ namespace BookzBox.Controllers
         }
 
         [HttpGet("api/recommendations")]
-        public async Task<ActionResult<IEnumerable<Box>>> FetchRecommendationsAsync(string key, string userId)
+        public async Task<ActionResult<IEnumerable<Box>>> FetchRecommendationsAsync(string userId)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest();
-            }
-
-            if (!ApiKey.IsValid(key))
-            {
-                return Forbid();
             }
 
             return Ok(await _recommenderRepo.FetchRecommendations(userId));
