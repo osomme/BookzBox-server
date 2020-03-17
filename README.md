@@ -42,7 +42,7 @@ Uri: /api/box/status?key=KEY&boxId=BOX_ID&status=NEW_BOX_STATUS
 <b>Get recommendations</b>   
 Protocol: HTTP GET
 
-URI: api/recommendations?key=KEY&userId=USER_ID
+URI: api/recommendations?userId=USER_ID
 
 Returns: list of boxes (feed boxes)
 
