@@ -11,7 +11,7 @@ namespace Models
         Traded = 2,
     }
 
-    public class Box
+    public class Box : IComparable<Box>
     {
         public Box()
         {
@@ -48,5 +48,29 @@ namespace Models
         public double Lng { get; set; }
         public Book[] Books { get; set; }
         public BoxStatus Status { get; set; }
+
+        public int CompareTo(Box other)
+        {
+            return this.Id.CompareTo(other.Id);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Box other)
+            {
+                return this.Id.Equals(other.Id);
+            }
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return this.Id.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return this.Id;
+        }
     }
 }

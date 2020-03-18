@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using BooxBox.DataAccess.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -16,15 +17,23 @@ namespace BookzBox.Controllers
             _recommenderRepo = new RecommenderRepository(new BoxRecordMapper());
         }
 
+        /// <summary>
+        /// Get box recommendations based on an internal algorithm.
+        /// </summary>
+        /// <param name="userId">The id of the user to get recommendations for.</param>
+        /// <param name="limit">The maximum amount of boxes to fetch.</param>
+        /// <returns>A list of recommended boxes.</returns>
         [HttpGet("api/recommendations")]
-        public async Task<ActionResult<IEnumerable<Box>>> FetchRecommendationsAsync(string userId)
+        public async Task<ActionResult<IEnumerable<Box>>> FetchRecommendationsAsync(
+            [Required]string userId,
+            [Required]uint limit)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            return Ok(await _recommenderRepo.FetchRecommendationsAsync(userId));
+            return Ok(await _recommenderRepo.FetchRecommendationsAsync(userId, limit));
         }
     }
 }
