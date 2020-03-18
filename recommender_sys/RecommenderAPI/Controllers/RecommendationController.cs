@@ -13,7 +13,7 @@ namespace BookzBox.Controllers
 
         public RecommendationController()
         {
-            _recommenderRepo = new RecommenderRepository();
+            _recommenderRepo = new RecommenderRepository(new BoxRecordMapper());
         }
 
         [HttpGet("api/recommendations")]
@@ -24,7 +24,7 @@ namespace BookzBox.Controllers
                 return BadRequest();
             }
 
-            return Ok(await _recommenderRepo.FetchRecommendations(userId));
+            return Ok(await _recommenderRepo.FetchRecommendationsAsync(userId));
         }
     }
 }

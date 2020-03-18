@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Models;
 using Neo4j.Driver;
+using Newtonsoft.Json;
 
 namespace BooxBox.DataAccess.Repositories
 {
@@ -26,6 +27,7 @@ namespace BooxBox.DataAccess.Repositories
             foreach (string subject in book.Subjects)
             {
                 await _subjectRepo.AddAsync(subject);
+                await _subjectRepo.AddInBookRelationshipAsync(book, subject);
                 await AddHasSubjectRelationshipAsync(book, subject);
             }
         }
@@ -36,7 +38,8 @@ namespace BooxBox.DataAccess.Repositories
             {
                 IResultCursor cursor = await _database.Session.RunAsync(
 
-                        $"MATCH (book:Book {{thumbnailUrl: '{book.ThumbnailUrl}'}}),(box:Box {{boxId: '{box.Id}'}}) MERGE (book)-[:PART_OF]-(box)"
+                        $"MATCH (book:Book {{thumbnailUrl: '{book.ThumbnailUrl}'}}),(box:Box {{boxId: '{box.Id}'}}) " +
+                        "MERGE (book)-[:PART_OF]-(box)"
 
                 );
                 await cursor.ConsumeAsync();
@@ -68,8 +71,9 @@ namespace BooxBox.DataAccess.Repositories
         {
             try
             {
+                string subjectsJson = JsonConvert.SerializeObject(book.Subjects);
                 IResultCursor cursor = await _database.Session.RunAsync(
-                    $"MERGE (b:Book {{thumbnailUrl: '{book.ThumbnailUrl}'}})"
+                    $"MERGE (b:Book {{thumbnailUrl: '{book.ThumbnailUrl}', subjects: '{subjectsJson}'}})"
                 );
                 await cursor.ConsumeAsync();
             }

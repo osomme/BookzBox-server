@@ -27,5 +27,22 @@ namespace BooxBox.DataAccess.Repositories
                 await _database.CloseSessionAsync();
             }
         }
+
+        public async Task AddInBookRelationshipAsync(Book book, string subject)
+        {
+            try
+            {
+                IResultCursor cursor = await _database.Session.RunAsync(
+
+                        $"MATCH (b:Book {{thumbnailUrl: '{book.ThumbnailUrl}'}}),(s:Subject {{name: '{subject}'}}) MERGE (s)-[r:IN_BOOK]->(b)"
+
+                );
+                await cursor.ConsumeAsync();
+            }
+            finally
+            {
+                await _database.CloseSessionAsync();
+            }
+        }
     }
 }

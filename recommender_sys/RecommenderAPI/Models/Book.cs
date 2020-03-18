@@ -5,6 +5,10 @@ namespace Models
 {
     public class Book
     {
+        public Book()
+        {
+        }
+
         public Book(string[] subjects, string thumbnailUrl)
         {
             this.Subjects = subjects;
