@@ -332,7 +332,9 @@ function boxToMapBoxItem(box) {
         books: box.books.map(b => {
             return {
                 thumbnailUrl: b.thumbnailUrl,
-                categories: b.categories
+                categories: b.categories,
+                authors: b.authors,
+                title: b.title
             }
         })
     };
@@ -366,7 +368,10 @@ function boxToFeedBoxItem(box) {
 }
 
 function uploadBoxToRecommendationSys(boxFeedItem) {
-    Request.post({ url: recommenderApiUrl + 'box?key=' + recommenderApiKey, formData: boxFeedItem },
+    Request.post({
+            url: recommenderApiUrl + 'box?key=' + recommenderApiKey,
+            formData: boxFeedItem
+        },
         function optionalCallback(err, httpResponse, body) {
             if (err) {
                 return console.error('Uploading box to recommender system failed: ', err);
@@ -407,13 +412,11 @@ function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
         preambleCRLF: true,
         postambleCRLF: true,
         uri: recommenderApiUrl + 'preferences?key=' + recommenderApiKey + '&userId=' + userId,
-        multipart: [
-            {
-                'content-type': 'application/json',
-                body: '"Subjects":' + JSON.stringify(subjects)
-            }
-        ],
-        function(error, response, body) {
+        multipart: [{
+            'content-type': 'application/json',
+            body: '"Subjects":' + JSON.stringify(subjects)
+        }],
+        function (error, response, body) {
             if (error) {
                 return console.error(`Failed to update user preferences in recommender system: ${error}`);
             }
