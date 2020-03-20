@@ -51,6 +51,21 @@ namespace BooxBox.DataAccess.Repositories
             }
         }
 
+        public async Task DeleteBoxAync(string boxId)
+        {
+            try
+            {
+                IResultCursor cursor = await _database.Session.RunAsync(
+                    $"MATCH (box:Box {{boxId: '{boxId}'}}) DETACH DELETE box"
+                );
+                await cursor.ConsumeAsync();
+            }
+            finally
+            {
+                await _database.CloseSessionAsync();
+            }
+        }
+
         /// Adds the box node to the database.
         private async Task AddBoxNodeAsync(Box box)
         {

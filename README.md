@@ -53,6 +53,11 @@ URI: /api/preferences?key=KEY&userId=USER_ID
 
 Body: { "Subjects" : [ "Fiction", "Romance" ] }
 
+<b>Delete box</b>
+Protocol: HTTP DELETE
+
+URI: /api/box?key=KEY&boxId=BOX_ID
+
 
 #### Database software- Neo4j
 <b>System requirements: </b>

@@ -62,5 +62,32 @@ namespace BookzBox.Controllers
             return Ok();
         }
 
+        /// <summary>Deletes a box.</summary>
+        /// <param name="key">The API key.</param>
+        /// <param name="boxId">Id of the box to delete.</param>
+        /// <returns>
+        ///     <see cref="BadRequestResult"/> if the passed boxId fails validation.
+        ///     <see cref="ForbidResult"/> if the API key is not valid.
+        ///     <see cref="OkResult"/> if successful.
+        /// </returns>
+        [HttpDelete("api/box/")]
+        public async Task<IActionResult> DeleteBoxAsync([FromQuery][Required] string key,
+                                                        [FromQuery][Required] string boxId)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            if (!ApiKey.IsValid(key))
+            {
+                return Forbid();
+            }
+
+            await _boxRepo.DeleteBoxAync(boxId);
+
+            return Ok();
+        }
+
     }
 }
