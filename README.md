@@ -2,81 +2,59 @@
 
 ## Firebase cloud services
 
-## Recommender system
 
-#### Server software- ASP.NET Core
-<b>Port:</b> 5000
+## Recommender server
+<b>Cloud provider:</b> Amazon AWS   
+<b>Instance type:</b> EC2   
+<b>IPv4:</b> 13.48.105.244   
+<b>DNS:</b> ec2-13-48-105-244.eu-north-1.compute.amazonaws.com   
+<b>OS:</b> Ubuntu   
 
-<b>Add box</b>   
-Protocol: HTTP POST
+#### Access
+sudo ssh -i ~/.ssh/[KEY_FILE] USERNAME@DNS   
 
-Uri: /api/box?key=KEY
+#### Architecture
+Client - (HTTP) -> Nginx (public) -> ASP.NET API (local) -> Neo4j (local)
 
-Body:   
-{
-	"Id": "box10",
-	"PublisherId": "user10",
-	"PublishedOn": "01-01-2019",
-	"Title": "A box",
-	"Books": [ { "ThumbnailUrl": "URL", "Subjects": [ "Fiction", "Sci-Fi" ] } ],
-	"Status": 1
-}
+#### ASP.NET Core
+Recommender API    
+<b>Location:</b>  http://localhost:5000    
+<b>Service name:</b> recommender-sys    
+<b>Files: </b> ~/www   
 
-<b>Add user</b>   
-Protocol: HTTP POST
-
-Uri: /api/users?key=KEY
-
-Body: { "Id": " " }
-
-<b>Like</b>   
-Protocol: HTTP GET
-
-Uri: /api/like?key=KEY&userId=USER_ID&boxId=BOX_ID
-
-<b>Update status</b>
-Protocol: HTTP PUT
-
-Uri: /api/box/status?key=KEY&boxId=BOX_ID&status=NEW_BOX_STATUS
-
-<b>Get recommendations</b>   
-Protocol: HTTP GET
-
-URI: api/recommendations?userId=USER_ID
-
-Returns: list of boxes (feed boxes)
-
-<b>Set/Update preferences</b>   
-Protocol: HTTP PUT
-
-URI: /api/preferences?key=KEY&userId=USER_ID
-
-Body: { "Subjects" : [ "Fiction", "Romance" ] }
-
-<b>Delete box</b>
-Protocol: HTTP DELETE
-
-URI: /api/box?key=KEY&boxId=BOX_ID
+<b>Deploy</b>    
+1. Build:   dotnet publish -r linux-x64 --self-contained false     
+2. Copy build to server:   scp -ri ~/.ssh/[KEY_FILE] publish/ USERNAME@DNS:~/www/     
 
 
-#### Database software- Neo4j
+#### Nginx
+Acts as a proxy redirecting requests to the correct service. 
+
+<b>Location:</b> IPv4:80    
+<b>Service name:</b> nginx   
+
+
+#### Neo4j
+
+<b>Location:</b> bolt://localhost:7687   
+<b>Service name:</b> neo4j    
+<b>Log:</b>     /var/log/neo4j/  
+<b>Config:</b> /etc/neo4j/neo4j.conf   
+<b>Auth:</b> /var/lib/neo4j/data/dbms/auth  
+
 <b>System requirements: </b>
   
 - Ubuntu 16.04+  
 
 - OpenJDK 11
 
-<b>Log:</b>     /var/log/neo4j/  
-<b>Config:</b> /etc/neo4j/neo4j.conf   
-<b>Auth:</b> /var/lib/neo4j/data/dbms/auth  
-
 <b>Setup:</b>
 
 - Install neo4j [install-instructions](https://neo4j.com/docs/operations-manual/current/installation/linux/debian/)
 
-- Unmark HTTP in config file
+- Name database in config file
 
-- Set allow_upgrade=true in config file
+- Change HTTP/HTTPS settings in config file
 
 Add constraint on userId: CREATE CONSTRAINT ON (u:User) ASSERT u.userId IS UNIQUE   
 Add constraint on boxId: CREATE CONSTRAINT ON (box:Box) ASSERT box.boxId IS UNIQUE  
