@@ -10,7 +10,7 @@ const boxFeedRef = firestore.collection('feed_boxes');
 const likesRef = firestore.collection('likes');
 const boxesRef = firestore.collection('boxes');
 const matchRef = firestore.collection('matches');
-const recommenderApiKey = 'lUTd2jfk45lloEv9a1dff4ZxX';
+const recommenderApiKey = ''; // TODO: add before deployment - not for version control
 const recommenderApiUrl = 'http://13.48.105.244:80/api/';
 
 /**
