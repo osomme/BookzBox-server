@@ -8,10 +8,12 @@ namespace BookzBox.Controllers
     [ApiController]
     public class LikeController : ControllerBase
     {
+        private readonly IKey _apiKeyHandler;
         private readonly LikeRepository _likeRepo;
 
-        public LikeController()
+        public LikeController(IKey key)
         {
+            _apiKeyHandler = key ?? throw new System.ArgumentNullException(nameof(key));
             _likeRepo = new LikeRepository();
         }
 
@@ -32,7 +34,7 @@ namespace BookzBox.Controllers
                 return BadRequest();
             }
 
-            if (!ApiKey.IsValid(key))
+            if (!_apiKeyHandler.IsValid(key))
             {
                 return Forbid();
             }

@@ -10,11 +10,13 @@ namespace BookzBox.Controllers
     [ApiController]
     public class BoxController : ControllerBase
     {
+        private readonly IKey _apiKeyHandler;
 
         private readonly BoxRepository _boxRepo;
 
-        public BoxController()
+        public BoxController(IKey apiKeyHandler)
         {
+            _apiKeyHandler = apiKeyHandler ?? throw new ArgumentNullException(nameof(apiKeyHandler));
             _boxRepo = new BoxRepository(
                 new UserRepository(),
                 new BookRepository(new SubjectRepository())
@@ -37,7 +39,7 @@ namespace BookzBox.Controllers
                 return BadRequest();
             }
 
-            if (!ApiKey.IsValid(key))
+            if (!_apiKeyHandler.IsValid(key))
             {
                 return Forbid();
             }
@@ -54,10 +56,11 @@ namespace BookzBox.Controllers
                 return BadRequest();
             }
 
-            if (!ApiKey.IsValid(key))
+            if (!_apiKeyHandler.IsValid(key))
             {
                 return Forbid();
             }
+
             await _boxRepo.UpdateStatusAsync(boxId, (BoxStatus)status);
             return Ok();
         }
@@ -79,7 +82,7 @@ namespace BookzBox.Controllers
                 return BadRequest();
             }
 
-            if (!ApiKey.IsValid(key))
+            if (!_apiKeyHandler.IsValid(key))
             {
                 return Forbid();
             }

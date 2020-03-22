@@ -10,11 +10,13 @@ namespace BookzBox.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+        private readonly IKey _apiKeyHandler;
 
         private readonly UserRepository _userRepository;
 
-        public UserController()
+        public UserController(IKey key)
         {
+            _apiKeyHandler = key ?? throw new System.ArgumentNullException(nameof(key));
             _userRepository = new UserRepository();
         }
 
@@ -34,7 +36,7 @@ namespace BookzBox.Controllers
                 return BadRequest();
             }
 
-            if (!ApiKey.IsValid(key))
+            if (!_apiKeyHandler.IsValid(key))
             {
                 return Forbid();
             }

@@ -1,10 +1,17 @@
-public static class ApiKey
-{
-    private static readonly string KEY = "lUTd2jfk45lloEv9a1dff4ZxX";
+using System;
 
-    /// Checks if the passed key is valid.
-    public static bool IsValid(string k)
+public class ApiKey : IKey
+{
+
+    private readonly string _apiKey;
+
+    public ApiKey(string key)
     {
-        return k == KEY;
+        _apiKey = key ?? throw new System.ArgumentNullException(nameof(key));
+    }
+
+    public bool IsValid(string key)
+    {
+        return key == _apiKey;
     }
 }

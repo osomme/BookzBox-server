@@ -11,11 +11,13 @@ namespace BookzBox.Controllers
     [ApiController]
     public class PreferencesController : ControllerBase
     {
+        private readonly IKey _apiKeyHandler;
 
         private readonly PreferencesRepository _preferencesRepo;
 
-        public PreferencesController()
+        public PreferencesController(IKey key)
         {
+            _apiKeyHandler = key ?? throw new ArgumentNullException(nameof(key));
             _preferencesRepo = new PreferencesRepository(
                 new UserRepository(),
                 new SubjectRepository()
@@ -42,7 +44,7 @@ namespace BookzBox.Controllers
                 return BadRequest();
             }
 
-            if (!ApiKey.IsValid(key))
+            if (!_apiKeyHandler.IsValid(key))
             {
                 return Forbid();
             }

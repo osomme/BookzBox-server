@@ -1,1 +1,0 @@
-This folder contains static values for security/ authentication during debugging/development/testing.
