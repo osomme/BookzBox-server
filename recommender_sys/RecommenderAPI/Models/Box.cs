@@ -18,16 +18,16 @@ namespace Models
 
         }
 
-        public Box(string id, string publisherId, DateTime publishedOn, string title, string description,
+        public Box(string id, string publisherId, long publishedOn, string title, string description,
                    double lat, double lng, Book[] books, BoxStatus status)
         {
             Id = id;
-            PublisherId = publisherId;
-            PublishedOn = publishedOn;
+            publisher = publisherId;
+            publishDateTime = publishedOn;
             Title = title;
             Description = description;
-            Lat = lat;
-            Lng = lng;
+            Latitude = lat;
+            Longitude = lng;
             Books = books;
             Status = status;
         }
@@ -36,16 +36,17 @@ namespace Models
         public string Id { get; set; }
 
         [Required]
-        public string PublisherId { get; set; }
+        public string publisher { get; set; }
 
-        public DateTime PublishedOn { get; set; }
+        /// <summary>Publish date in unix time since epoch.</summary>
+        public long publishDateTime { get; set; }
 
         [Required]
         [StringLength(50, MinimumLength = 1)]
         public string Title { get; set; }
         public string Description { get; set; }
-        public double Lat { get; set; }
-        public double Lng { get; set; }
+        public double Latitude { get; set; }
+        public double Longitude { get; set; }
         public Book[] Books { get; set; }
         public BoxStatus Status { get; set; }
 

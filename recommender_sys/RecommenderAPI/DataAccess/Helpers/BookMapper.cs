@@ -11,7 +11,7 @@ public class BookMapper
         Book book = new Book();
 
         book.ThumbnailUrl = node.Properties["thumbnailUrl"] as string;
-        book.Subjects = parseSubjects(node.Properties["subjects"] as string);
+        book.Categories = parseSubjects(node.Properties["subjects"] as string);
 
         return book;
     }

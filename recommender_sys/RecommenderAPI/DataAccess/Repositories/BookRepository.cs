@@ -24,7 +24,7 @@ namespace BooxBox.DataAccess.Repositories
 
             await AddBookNodeAsync(book);
 
-            foreach (string subject in book.Subjects)
+            foreach (string subject in book.Categories)
             {
                 await _subjectRepo.AddAsync(subject);
                 await _subjectRepo.AddInBookRelationshipAsync(book, subject);
@@ -71,7 +71,7 @@ namespace BooxBox.DataAccess.Repositories
         {
             try
             {
-                string subjectsJson = JsonConvert.SerializeObject(book.Subjects);
+                string subjectsJson = JsonConvert.SerializeObject(book.Categories);
                 IResultCursor cursor = await _database.Session.RunAsync(
                     $"MERGE (b:Book {{thumbnailUrl: '{book.ThumbnailUrl}', subjects: '{subjectsJson}'}})"
                 );

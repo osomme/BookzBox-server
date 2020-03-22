@@ -11,11 +11,11 @@ namespace Models
 
         public Book(string[] subjects, string thumbnailUrl)
         {
-            this.Subjects = subjects;
+            this.Categories = subjects;
             this.ThumbnailUrl = thumbnailUrl;
         }
 
-        public string[] Subjects { get; set; }
+        public string[] Categories { get; set; }
         [Required]
         public string ThumbnailUrl { get; set; }
     }

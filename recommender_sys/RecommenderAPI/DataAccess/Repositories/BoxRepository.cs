@@ -26,8 +26,8 @@ namespace BooxBox.DataAccess.Repositories
             }
 
             await AddBoxNodeAsync(box);
-            await _userRepo.AddAsync(new User(box.PublisherId));
-            await _userRepo.AddPublisherRelationshipAsync(box.PublisherId, box.Id);
+            await _userRepo.AddAsync(new User(box.publisher));
+            await _userRepo.AddPublisherRelationshipAsync(box.publisher, box.Id);
 
             foreach (Book book in box.Books)
             {
@@ -72,7 +72,7 @@ namespace BooxBox.DataAccess.Repositories
             try
             {
                 IResultCursor cursor = await _database.Session.RunAsync(
-                    $"MERGE (b:Box {{ boxId: '{box.Id}', publisherId: '{box.PublisherId}', publishedOn: {((DateTimeOffset)box.PublishedOn).ToUnixTimeSeconds()}, title: '{box.Title}', description: '{box.Description}', lat: {(box.Lat <= 0 ? 0.0 : box.Lat)}, lng: {(box.Lng <= 0 ? 0.0 : box.Lng)}, status: {(int)box.Status}}})"
+                    $"MERGE (b:Box {{ boxId: '{box.Id}', publisherId: '{box.publisher}', publishedOn: {box.publishDateTime}, title: '{box.Title}', description: '{box.Description}', lat: {(box.Latitude <= 0 ? 0.0 : box.Latitude)}, lng: {(box.Longitude <= 0 ? 0.0 : box.Longitude)}, status: {(int)box.Status}}})"
                 );
                 await cursor.ConsumeAsync();
             }

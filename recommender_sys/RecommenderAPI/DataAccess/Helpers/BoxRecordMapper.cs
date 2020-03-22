@@ -21,13 +21,13 @@ public class BoxRecordMapper : IRecordMapper<Box>
         // Map BOX
         Box box = new Box();
         box.Id = boxDictionary.Properties["boxId"] as string;
-        box.PublisherId = boxDictionary.Properties["publisherId"] as string;
-        box.PublishedOn = DateTimeOffset.FromUnixTimeSeconds((long)boxDictionary.Properties["publishedOn"]).DateTime;
+        box.publisher = boxDictionary.Properties["publisherId"] as string;
+        box.publishDateTime = (long)boxDictionary.Properties["publishedOn"];
         box.Title = boxDictionary.Properties["title"] as string;
         box.Description = boxDictionary.Properties["description"] as string;
         box.Status = (BoxStatus)((int)((long)boxDictionary.Properties["status"]));
-        box.Lat = (double)boxDictionary.Properties["lat"];
-        box.Lng = (double)boxDictionary.Properties["lng"];
+        box.Latitude = (double)boxDictionary.Properties["lat"];
+        box.Longitude = (double)boxDictionary.Properties["lng"];
 
         // MAP BOOKS
         box.Books = _bookMapper.MapAll(record).ToArray();
