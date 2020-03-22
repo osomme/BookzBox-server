@@ -10,7 +10,7 @@ const likesRef = firestore.collection('likes');
 const boxesRef = firestore.collection('boxes');
 const matchRef = firestore.collection('matches');
 const recommenderApiKey = 'lUTd2jfk45lloEv9a1dff4ZxX';
-const recommenderApiUrl = 'https://localhost:5000/api/'; // TODO: update with actual url
+const recommenderApiUrl = 'http://13.48.105.244:80/api/';
 
 /**
  * Listens for new boxes on the /boxes/ collection and creates derived versions.
@@ -369,9 +369,9 @@ function boxToFeedBoxItem(box) {
 
 function uploadBoxToRecommendationSys(boxFeedItem) {
     Request.post({
-            url: recommenderApiUrl + 'box?key=' + recommenderApiKey,
-            formData: boxFeedItem
-        },
+        url: recommenderApiUrl + 'box?key=' + recommenderApiKey,
+        formData: boxFeedItem
+    },
         function optionalCallback(err, httpResponse, body) {
             if (err) {
                 return console.error('Uploading box to recommender system failed: ', err);
@@ -416,7 +416,7 @@ function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
             'content-type': 'application/json',
             body: '"Subjects":' + JSON.stringify(subjects)
         }],
-        function (error, response, body) {
+        function(error, response, body) {
             if (error) {
                 return console.error(`Failed to update user preferences in recommender system: ${error}`);
             }
