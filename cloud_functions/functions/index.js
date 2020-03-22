@@ -1,3 +1,4 @@
+const request = require('request');
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 admin.initializeApp();
@@ -31,7 +32,7 @@ exports.onBoxUploaded = functions.firestore
             .set(boxToProfileBoxItem(box));
         // Add mapped box to box feed collection
         const boxFeed = boxFeedRef.doc(boxId).set(boxToFeedBoxItem(box));
-        uploadBoxToRecommendationSys(boxFeed);
+        uploadBoxToRecommendationSys(boxToFeedBoxItemWithId(boxId, box));
 
         return Promise.all([mapBoxes, userBoxes, boxFeed]);
     });
@@ -94,13 +95,13 @@ exports.onLikeUploaded = functions.firestore
  * Listens for updates on the user.
  */
 exports.onUserUpdate = functions.firestore
-    .document('users/{user}')
+    .document('/users/{user}')
     .onUpdate((change, _) => {
         const userId = change.after.id;
         const subjects = change.after.favoriteGenres;
 
         updatePreferedSubjectsInRecommendationSys(userId, subjects);
-
+        return Promise.resolve();
     });
 
 /**
@@ -367,20 +368,40 @@ function boxToFeedBoxItem(box) {
     };
 }
 
-function uploadBoxToRecommendationSys(boxFeedItem) {
-    Request.post({
-        url: recommenderApiUrl + 'box?key=' + recommenderApiKey,
-        formData: boxFeedItem
-    },
-        function optionalCallback(err, httpResponse, body) {
-            if (err) {
-                return console.error('Uploading box to recommender system failed: ', err);
+function boxToFeedBoxItemWithId(id, box) {
+    return {
+        id: id,
+        publisher: box.publisher,
+        status: box.status,
+        publishDateTime: box.publishDateTime,
+        latitude: box.latitude,
+        longitude: box.longitude,
+        title: box.title,
+        description: box.description,
+        books: box.books.map(b => {
+            return {
+                thumbnailUrl: b.thumbnailUrl,
+                categories: b.categories
             }
-        });
+        })
+    };
+}
+
+function uploadBoxToRecommendationSys(boxFeedItem) {
+    request.post({
+        headers: { 'content-type': 'application/json' },
+        url: recommenderApiUrl + 'box?key=' + recommenderApiKey,
+        body: JSON.stringify(boxFeedItem)
+    }, function (error, response, body) {
+        if (error) {
+            return console.error('Uploading box to recommender system failed: ', err);
+        }
+        return console.log('Uploaded box to recommedner system.');
+    });
 }
 
 function updateBoxStatusInRecommendationSys(boxId, boxStatus) {
-    Request.put(recommenderApiUrl + 'box/status?key=' + recommenderApiKey + '&boxId=' + boxId + '&status=' + boxStatus)
+    request.put(recommenderApiUrl + 'box/status?key=' + recommenderApiKey + '&boxId=' + boxId + '&status=' + boxStatus)
         .on('error', function (err) {
             console.error(`Failed to update box status in recommender system: ${err}`);
         });
@@ -393,7 +414,7 @@ function updateBoxStatusInRecommendationSys(boxId, boxStatus) {
  * @param {String} userId The id of the user of which liked the box.
  */
 function likeBoxInRecommendationSys(boxId, userId) {
-    Request.get(`${recommenderApiUrl}like?key=${recommenderApiKey}&userId=${userId}&boxId=${boxId}`)
+    request.get(`${recommenderApiUrl}like?key=${recommenderApiKey}&userId=${userId}&boxId=${boxId}`)
         .on('error', function (err) {
             console.error(`Failed to send box like to recommendation system: ${err}`);
         });
@@ -407,20 +428,13 @@ function likeBoxInRecommendationSys(boxId, userId) {
  * @param {Array} subjects An array of book subjects 
  */
 function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
-    request({
-        method: 'PUT',
-        preambleCRLF: true,
-        postambleCRLF: true,
-        uri: recommenderApiUrl + 'preferences?key=' + recommenderApiKey + '&userId=' + userId,
-        multipart: [{
-            'content-type': 'application/json',
-            body: '"Subjects":' + JSON.stringify(subjects)
-        }],
-        function(error, response, body) {
-            if (error) {
-                return console.error(`Failed to update user preferences in recommender system: ${error}`);
-            }
-
+    request.put({
+        headers: { 'content-type': 'application/json' },
+        url: recommenderApiUrl + 'preferences?key=' + recommenderApiKey + '&userId=' + userId,
+    }, function (error, response, body) {
+        if (error) {
+            return console.error(`Failed to update user preferences in recommender system: ${error}`);
         }
+        return console.log('Uploaded new user preferences to recommender system.');
     });
 }
