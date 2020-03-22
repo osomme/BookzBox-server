@@ -14,9 +14,9 @@ namespace BooxBox.DataAccess
 
         private bool _hasOpenSession;
 
-        public Database()
+        public Database(IDatabaseAuth auth)
         {
-            _driver = GraphDatabase.Driver(DB_URI, AuthTokens.Basic(DatabaseAuth.DB_USERNAME, DatabaseAuth.DB_PASSWORD));
+            _driver = GraphDatabase.Driver(DB_URI, AuthTokens.Basic(auth.Username, auth.Password));
             _session = null;
             _hasOpenSession = false;
         }

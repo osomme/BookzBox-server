@@ -1,6 +1,12 @@
 /// Database authentication information.
-public static class DatabaseAuth
+public class DatabaseAuth : IDatabaseAuth
 {
-    public static string DB_USERNAME = "neo4j"; // Local database username
-    public static string DB_PASSWORD = "bb//database"; // Local database password
+    public DatabaseAuth(string usr, string psw)
+    {
+        Username = usr ?? throw new System.ArgumentNullException(nameof(usr));
+        Password = psw ?? throw new System.ArgumentNullException(nameof(psw));
+    }
+
+    public string Username { get; set; }
+    public string Password { get; set; }
 }

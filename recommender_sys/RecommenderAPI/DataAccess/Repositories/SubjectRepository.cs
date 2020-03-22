@@ -6,8 +6,14 @@ using Neo4j.Driver;
 namespace BooxBox.DataAccess.Repositories
 {
     /// Database handling for book subjects/genres
-    public class SubjectRepository : BaseRepository
+    public class SubjectRepository : BaseRepository, ISubjectRepository
     {
+        public SubjectRepository(IDatabase db)
+            : base(db)
+        {
+
+        }
+
         public async Task AddAsync(string subject)
         {
             if (subject is null)

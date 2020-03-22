@@ -6,11 +6,12 @@ using Newtonsoft.Json;
 
 namespace BooxBox.DataAccess.Repositories
 {
-    public class BookRepository : BaseRepository
+    public class BookRepository : BaseRepository, IBookRepository
     {
-        private readonly SubjectRepository _subjectRepo;
+        private readonly ISubjectRepository _subjectRepo;
 
-        public BookRepository(SubjectRepository subjectRepo)
+        public BookRepository(IDatabase db, ISubjectRepository subjectRepo)
+            : base(db)
         {
             _subjectRepo = subjectRepo ?? throw new ArgumentNullException(nameof(subjectRepo));
         }

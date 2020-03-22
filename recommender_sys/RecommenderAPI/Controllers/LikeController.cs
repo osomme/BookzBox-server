@@ -9,12 +9,12 @@ namespace BookzBox.Controllers
     public class LikeController : ControllerBase
     {
         private readonly IKey _apiKeyHandler;
-        private readonly LikeRepository _likeRepo;
+        private readonly ILikeRepository _likeRepo;
 
-        public LikeController(IKey key)
+        public LikeController(IKey key, ILikeRepository likeRepo)
         {
             _apiKeyHandler = key ?? throw new System.ArgumentNullException(nameof(key));
-            _likeRepo = new LikeRepository();
+            _likeRepo = likeRepo ?? throw new System.ArgumentNullException(nameof(likeRepo));
         }
 
         /// <summary>Adds the passed box to the database.</summary>

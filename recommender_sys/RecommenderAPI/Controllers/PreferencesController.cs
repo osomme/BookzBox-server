@@ -13,15 +13,12 @@ namespace BookzBox.Controllers
     {
         private readonly IKey _apiKeyHandler;
 
-        private readonly PreferencesRepository _preferencesRepo;
+        private readonly IPreferencesRepository _preferencesRepo;
 
-        public PreferencesController(IKey key)
+        public PreferencesController(IKey key, IPreferencesRepository preferencesRepository)
         {
             _apiKeyHandler = key ?? throw new ArgumentNullException(nameof(key));
-            _preferencesRepo = new PreferencesRepository(
-                new UserRepository(),
-                new SubjectRepository()
-            );
+            _preferencesRepo = preferencesRepository ?? throw new ArgumentNullException(nameof(preferencesRepository));
         }
 
         /// <summary>Adds the given user preferences.</summary>

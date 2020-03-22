@@ -5,8 +5,14 @@ using Neo4j.Driver;
 
 namespace BooxBox.DataAccess.Repositories
 {
-    public class UserRepository : BaseRepository
+    public class UserRepository : BaseRepository, IUserRepository
     {
+
+        public UserRepository(IDatabase db)
+            : base(db)
+        {
+
+        }
 
         /// Adds the passed user to the database if the user does not already exist.
         public async Task AddAsync(User user)

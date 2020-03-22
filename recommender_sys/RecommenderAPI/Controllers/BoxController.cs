@@ -12,15 +12,12 @@ namespace BookzBox.Controllers
     {
         private readonly IKey _apiKeyHandler;
 
-        private readonly BoxRepository _boxRepo;
+        private readonly IBoxRepository _boxRepo;
 
-        public BoxController(IKey apiKeyHandler)
+        public BoxController(IKey apiKeyHandler, IBoxRepository boxRepo)
         {
             _apiKeyHandler = apiKeyHandler ?? throw new ArgumentNullException(nameof(apiKeyHandler));
-            _boxRepo = new BoxRepository(
-                new UserRepository(),
-                new BookRepository(new SubjectRepository())
-            );
+            _boxRepo = boxRepo ?? throw new ArgumentNullException(nameof(boxRepo));
         }
 
         /// <summary>Adds the passed box to the database.</summary>

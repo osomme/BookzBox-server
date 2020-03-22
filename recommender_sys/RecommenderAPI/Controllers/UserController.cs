@@ -12,12 +12,12 @@ namespace BookzBox.Controllers
     {
         private readonly IKey _apiKeyHandler;
 
-        private readonly UserRepository _userRepository;
+        private readonly IUserRepository _userRepository;
 
-        public UserController(IKey key)
+        public UserController(IKey key, IUserRepository userRepo)
         {
             _apiKeyHandler = key ?? throw new System.ArgumentNullException(nameof(key));
-            _userRepository = new UserRepository();
+            _userRepository = userRepo ?? throw new System.ArgumentNullException(nameof(userRepo));
         }
 
         /// <summary>Adds the passed user to the database.</summary>

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Models;
 using Neo4j.Driver;
 
-public class BoxRecordMapper : IRecordMapper<Box>
+public class BoxRecordMapper : IBoxRecordMapper
 {
     readonly BookMapper _bookMapper = new BookMapper();
 

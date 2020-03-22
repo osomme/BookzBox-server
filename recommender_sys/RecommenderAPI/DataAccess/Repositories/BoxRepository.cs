@@ -5,13 +5,14 @@ using Neo4j.Driver;
 
 namespace BooxBox.DataAccess.Repositories
 {
-    public class BoxRepository : BaseRepository
+    public class BoxRepository : BaseRepository, IBoxRepository
     {
 
-        private readonly UserRepository _userRepo;
-        private readonly BookRepository _bookRepo;
+        private readonly IUserRepository _userRepo;
+        private readonly IBookRepository _bookRepo;
 
-        public BoxRepository(UserRepository userRepo, BookRepository bookRepo)
+        public BoxRepository(IDatabase db, IUserRepository userRepo, IBookRepository bookRepo)
+            : base(db)
         {
             _userRepo = userRepo ?? throw new ArgumentNullException(nameof(userRepo));
             _bookRepo = bookRepo ?? throw new ArgumentNullException(nameof(bookRepo));

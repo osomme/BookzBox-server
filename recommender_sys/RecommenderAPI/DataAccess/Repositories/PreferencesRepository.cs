@@ -4,13 +4,14 @@ using BooxBox.DataAccess.Repositories;
 using Models;
 using Neo4j.Driver;
 
-public class PreferencesRepository : BaseRepository
+public class PreferencesRepository : BaseRepository, IPreferencesRepository
 {
 
-    private readonly UserRepository _userRepo;
-    private readonly SubjectRepository _subjectRepo;
+    private readonly IUserRepository _userRepo;
+    private readonly ISubjectRepository _subjectRepo;
 
-    public PreferencesRepository(UserRepository userRepo, SubjectRepository subjectRepo)
+    public PreferencesRepository(IDatabase db, IUserRepository userRepo, ISubjectRepository subjectRepo)
+        : base(db)
     {
         _userRepo = userRepo ?? throw new System.ArgumentNullException(nameof(userRepo));
         _subjectRepo = subjectRepo ?? throw new System.ArgumentNullException(nameof(subjectRepo));

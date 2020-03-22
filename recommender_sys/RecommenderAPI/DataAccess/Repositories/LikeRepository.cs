@@ -5,8 +5,14 @@ using Neo4j.Driver;
 
 namespace BooxBox.DataAccess.Repositories
 {
-    public class LikeRepository : BaseRepository
+    public class LikeRepository : BaseRepository, ILikeRepository
     {
+        public LikeRepository(IDatabase db)
+            : base(db)
+        {
+
+        }
+
         public async Task LikeAsync(string userId, string boxId)
         {
             try

@@ -7,11 +7,12 @@ using Neo4j.Driver;
 
 namespace BooxBox.DataAccess.Repositories
 {
-    public class RecommenderRepository : BaseRepository
+    public class RecommenderRepository : BaseRepository, IRecommenderRepository
     {
-        private readonly IRecordMapper<Box> _boxMapper;
+        private readonly IBoxRecordMapper _boxMapper;
 
-        public RecommenderRepository(IRecordMapper<Box> boxMapper)
+        public RecommenderRepository(IDatabase db, IBoxRecordMapper boxMapper)
+             : base(db)
         {
             _boxMapper = boxMapper ?? throw new ArgumentNullException(nameof(boxMapper));
         }

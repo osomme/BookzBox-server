@@ -10,11 +10,11 @@ namespace BookzBox.Controllers
     [ApiController]
     public class RecommendationController : ControllerBase
     {
-        private readonly RecommenderRepository _recommenderRepo;
+        private readonly IRecommenderRepository _recommenderRepo;
 
-        public RecommendationController()
+        public RecommendationController(IRecommenderRepository recommenderRepo)
         {
-            _recommenderRepo = new RecommenderRepository(new BoxRecordMapper());
+            _recommenderRepo = recommenderRepo ?? throw new System.ArgumentNullException(nameof(recommenderRepo));
         }
 
         /// <summary>
