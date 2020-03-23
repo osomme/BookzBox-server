@@ -70,7 +70,8 @@ namespace BooxBox.DataAccess.Repositories
                 }
                 else
                 {
-                    weight_map.Add(weight_box.Item2, weight_box.Item1);
+                    uint totalW = weight_box.Item1 + GetPublishDateWeight(weight_box.Item2);
+                    weight_map.Add(weight_box.Item2, totalW);
                 }
             }
 
@@ -78,6 +79,35 @@ namespace BooxBox.DataAccess.Repositories
             sorted.ForEach(kv => result.Add(kv.Key));
 
             return result;
+        }
+
+        /// <summary>
+        /// Calculates the amount of weight to give the box based on
+        /// the date it was published. More recent boxes get higher weight.
+        /// </summary>
+        /// <param name="box">The box to get the weight for.</param>
+        /// <returns>A weight</returns>
+        private uint GetPublishDateWeight(Box box)
+        {
+            var published = DateTimeOffset.FromUnixTimeMilliseconds(box.publishDateTime).Date;
+            var now = DateTimeOffset.Now.Date;
+            var dayDiff = (now - published).TotalDays;
+            if (dayDiff > 30)
+            {
+                return 0;
+            }
+            else if (dayDiff > 14)
+            {
+                return 1;
+            }
+            else if (dayDiff > 7)
+            {
+                return 2;
+            }
+            else
+            {
+                return 4;
+            }
         }
 
         private async Task<IEnumerable<Box>> FetchBoxesAsync(string userId, uint limit, string query)

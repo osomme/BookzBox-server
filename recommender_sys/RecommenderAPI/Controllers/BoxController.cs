@@ -70,7 +70,7 @@ namespace BookzBox.Controllers
         ///     <see cref="ForbidResult"/> if the API key is not valid.
         ///     <see cref="OkResult"/> if successful.
         /// </returns>
-        [HttpDelete("api/box/")]
+        [HttpDelete("api/box")]
         public async Task<IActionResult> DeleteBoxAsync([FromQuery][Required] string key,
                                                         [FromQuery][Required] string boxId)
         {
