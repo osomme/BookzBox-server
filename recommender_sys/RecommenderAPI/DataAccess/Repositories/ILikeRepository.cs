@@ -6,5 +6,6 @@ namespace BooxBox.DataAccess.Repositories
     public interface ILikeRepository : IBaseRepository
     {
         public Task LikeAsync(string userId, string boxId);
+        public Task RemoveLikeAsync(string userId, string boxId);
     }
 }
