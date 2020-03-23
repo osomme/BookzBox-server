@@ -271,6 +271,8 @@ exports.onLikeDeleted = functions.firestore
             .doc(boxId)
             .delete();
 
+        deleteLikeInRecommenderSys(likedById, boxId);
+
         return Promise.all([userActivityFeed, userLikedFeed]);
     });
 
@@ -431,10 +433,18 @@ function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
     request.put({
         headers: { 'content-type': 'application/json' },
         url: recommenderApiUrl + 'preferences?key=' + recommenderApiKey + '&userId=' + userId,
+        body: "Subjects:" + subjects
     }, function (error, response, body) {
         if (error) {
             return console.error(`Failed to update user preferences in recommender system: ${error}`);
         }
         return console.log('Uploaded new user preferences to recommender system.');
     });
+}
+
+function deleteLikeInRecommenderSys(userId, boxId) {
+    request.delete(recommenderApiKey + 'like?key=' + recommenderApiKey + '&userId=' + userId + '&boxId=' + boxId)
+        .on('error', function (err) {
+            console.error(`Failed to delete like with error: ${err}`);
+        });
 }
