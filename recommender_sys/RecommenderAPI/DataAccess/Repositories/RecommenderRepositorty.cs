@@ -196,7 +196,7 @@ namespace BooxBox.DataAccess.Repositories
             return await FetchBoxesAsync(
                 userId,
                 limit,
-                $"MATCH (user:User {{userId: '{userId}'}})-[:PUBlISHED]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[*0..1]-(box:Box) " +
+                $"MATCH (user:User {{userId: '{userId}'}})-[:PUBlISHED]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[:PART_OF]-(box:Box) " +
                 "WHERE box.status = 0 and box.publisherId <> user.userId " +
                 "RETURN box, collect(book) as books, collect(s) as subjects"
             );
@@ -236,7 +236,7 @@ namespace BooxBox.DataAccess.Repositories
             return await FetchBoxesAsync(
                 userId,
                 limit,
-                $"MATCH (user:User {{userId: '{userId}'}})-[:LIKES]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[*0..1]-(box:Box) " +
+                $"MATCH (user:User {{userId: '{userId}'}})-[:LIKES]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[:PART_OF]-(box:Box) " +
                 "WHERE box.status = 0 and box.publisherId <> user.userId " +
                 "RETURN box, collect(book) as books"
             );

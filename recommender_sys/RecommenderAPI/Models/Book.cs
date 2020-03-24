@@ -18,5 +18,10 @@ namespace Models
         public string[] Categories { get; set; }
         [Required]
         public string ThumbnailUrl { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Book book && ThumbnailUrl == book.ThumbnailUrl;
+        }
     }
 }

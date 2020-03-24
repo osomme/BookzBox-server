@@ -27,7 +27,11 @@ public class BookMapper
             List<object> bookDictionary = (List<object>)bookDictionaryObj;
             foreach (object node in bookDictionary)
             {
-                books.Add(Map(node as INode));
+                var book = Map(node as INode);
+                if (!books.Contains(book))
+                {
+                    books.Add(book);
+                }
             }
         }
         return books;
