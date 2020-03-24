@@ -38,6 +38,25 @@ exports.onBoxUploaded = functions.firestore
     });
 
 /**
+ * Listens for a deletion on the main box collection and deletes
+ * the box in all locations.
+ */
+exports.deleteBox = functions.firestore
+    .document('/boxes/{box}')
+    .onDelete((snap, context) => {
+        const box = snap.data();
+        const boxId = snap.id;
+
+        const mapBoxes = mapBoxesRef.doc(boxId).delete();
+        const userBoxes = usersRef.doc(box.publisher).collection('boxes').doc(boxId).delete();
+        const feedBoxes = boxFeedRef.doc(boxId).delete();
+
+        deleteBoxInRecommenderys(boxId);
+
+        return Promise.all([mapBoxes, userBoxes, feedBoxes]);
+    });
+
+/**
  * Listens for updates on existing boxes and updates the derived box versions also.
  * Only used for updating the box status.
  */
@@ -443,8 +462,15 @@ function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
 }
 
 function deleteLikeInRecommenderSys(userId, boxId) {
-    request.delete(recommenderApiKey + 'like?key=' + recommenderApiKey + '&userId=' + userId + '&boxId=' + boxId)
+    request.delete(recommenderApiUrl + 'like?key=' + recommenderApiKey + '&userId=' + userId + '&boxId=' + boxId)
         .on('error', function (err) {
             console.error(`Failed to delete like with error: ${err}`);
+        });
+}
+
+function deleteBoxInRecommenderys(boxId) {
+    request.delete(recommenderApiUrl + 'box?key=' + recommenderApiKey + '&boxId=' + boxId)
+        .on('error', function (err) {
+            console.error(`Failed to delete box with error: ${err}`);
         });
 }
