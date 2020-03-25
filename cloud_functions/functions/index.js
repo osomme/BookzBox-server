@@ -295,7 +295,67 @@ exports.onLikeDeleted = functions.firestore
         return Promise.all([userActivityFeed, userLikedFeed]);
     });
 
+
 /**
+ * Triggered when a user posts a trade offer request.
+ * Adds a notification item in the activity feed of the recipient user.
+ */
+exports.onTradeRequestAdded = functions.firestore
+    .document('/matches/{match}/trade_offers/{offer}')
+    .onCreate(async (snapshot, context) => {
+        const tradeReq = snapshot.data();
+        const matchId = context.params.match;
+        const recipientId = tradeReq.offerRecipientId;
+
+        const username = await usersRef.doc(tradeReq.offerByUserId).get().then(doc => doc.data().displayName);
+
+        return usersRef.doc(recipientId).collection('activity').add({
+            read: false,
+            typename: 'trade',
+            timestamp: tradeReq.timestamp,
+            data: {
+                username: username,
+                event: 'new',
+                matchId: matchId
+            }
+        });
+    });
+
+/**
+ * Triggered when a user accepts or rejects a trade request.
+ * Adds a notification item in the activity feed of the request owner.
+ */
+exports.onTradeRequestChanged = functions.firestore
+    .document('/matches/{match}/trade_offers/{offer}')
+    .onUpdate(async (snapshot, context) => {
+        const tradeReq = snapshot.after.data();
+        const matchId = context.params.match;
+
+        const username = await usersRef.doc(tradeReq.offerRecipientId).get().then(doc => doc.data().displayName);
+
+        let eventType;
+        if (tradeReq.status === 0) {
+            eventType = 'accepted';
+        } else if (tradeReq.status === 1) {
+            eventType = 'rejected';
+        } else {
+            eventType = 'unknown';
+        }
+
+        return usersRef.doc(tradeReq.offerByUserId).collection('activity').add({
+            read: false,
+            typename: 'trade',
+            timestamp: tradeReq.timestamp,
+            data: {
+                username: username,
+                event: eventType,
+                matchId: matchId
+            }
+        });
+    });
+
+/**
+ * Triggered when a user posts a chat message.
  * Updates the activity item for a particular chat for both participants in the chat.
  */
 exports.onMessagePosted = functions.firestore
@@ -314,7 +374,7 @@ exports.onMessagePosted = functions.firestore
     });
 
 /**
- * 
+ * Updates the chat activity item for one user in a match.
  * @param {Object} activityOwner The owner of the activity that is being updated
  * @param {Object} otherChatUser The user that the owner is chatting with
  * @param {String} matchId The match ID belonging to the match between the two users
@@ -410,7 +470,9 @@ function boxToFeedBoxItemWithId(id, box) {
 
 function uploadBoxToRecommendationSys(boxFeedItem) {
     request.post({
-        headers: { 'content-type': 'application/json' },
+        headers: {
+            'content-type': 'application/json'
+        },
         url: recommenderApiUrl + 'box?key=' + recommenderApiKey,
         body: JSON.stringify(boxFeedItem)
     }, function (error, response, body) {
@@ -450,7 +512,9 @@ function likeBoxInRecommendationSys(boxId, userId) {
  */
 function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
     request.put({
-        headers: { 'content-type': 'application/json' },
+        headers: {
+            'content-type': 'application/json'
+        },
         url: recommenderApiUrl + 'preferences?key=' + recommenderApiKey + '&userId=' + userId,
         body: "Subjects:" + subjects
     }, function (error, response, body) {
