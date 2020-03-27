@@ -23,5 +23,15 @@ namespace Models
         {
             return obj is Book book && ThumbnailUrl == book.ThumbnailUrl;
         }
+
+        public override int GetHashCode()
+        {
+            return ThumbnailUrl.GetHashCode();
+        }
+
+        public override string ToString()
+        {
+            return base.ToString();
+        }
     }
 }

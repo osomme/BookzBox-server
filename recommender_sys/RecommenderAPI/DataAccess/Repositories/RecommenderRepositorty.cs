@@ -34,12 +34,17 @@ namespace BooxBox.DataAccess.Repositories
         /// <param name="limit">The maximum amount of results to return.</param>
         /// <param name="latitude">The latitude coordinate of the location to get recommendations for.</param>
         /// <param name="longitude">The longitude coordinate of the location to get recommendations for.</param>
+        /// <param name="mark">
+        /// If true, marks the recommended boxes such that they will
+        /// not be recommended again.
+        /// </param>
         /// <returns>List of boxes - can be empty</returns>
         public async Task<IEnumerable<Box>> FetchRecommendationsAsync(
             string userId,
             int limit,
             double latitude,
-            double longitude)
+            double longitude,
+            bool mark)
         {
             List<Tuple<int, Box>> weight_box = new List<Tuple<int, Box>>();
 
@@ -49,8 +54,12 @@ namespace BooxBox.DataAccess.Repositories
             weight_box.AddRange(GetBoxesAsTuples(await FetchBoxesFromMyLikes(userId, limit), VERY_LOW_IMPORTANCE));
             weight_box.AddRange(GetBoxesAsTuples(await FetchBoxesFromOthersLikes(userId, limit), VERY_LOW_IMPORTANCE));
 
-            // TODO: Mark boxes as recommended so they don't get recommended multiple times.
-            return GetHighestWeightedBoxes(weight_box, latitude, longitude).Take(limit);
+            var recommendations = GetHighestWeightedBoxes(weight_box, latitude, longitude).Take(limit);
+            if (mark)
+            {
+                await MarkAllBoxesAsync(userId, recommendations);
+            }
+            return recommendations;
         }
 
         private List<Tuple<int, Box>> GetBoxesAsTuples(IEnumerable<Box> boxes, int weight)
@@ -197,7 +206,7 @@ namespace BooxBox.DataAccess.Repositories
                 userId,
                 limit,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:PUBlISHED]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[:PART_OF]-(box:Box) " +
-                "WHERE box.status = 0 and box.publisherId <> user.userId " +
+                "WHERE box.status = 0 AND box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
                 "RETURN box, collect(book) as books, collect(s) as subjects"
             );
         }
@@ -217,7 +226,7 @@ namespace BooxBox.DataAccess.Repositories
                 userId,
                 limit,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:PREFERS]-(s:Subject)-[:IN_BOOK]-(book:Book)-[:PART_OF]-(box:Box) " +
-                "WHERE box.status = 0 and box.publisherId <> user.userId " +
+                "WHERE box.status = 0 and box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
                 "RETURN box, collect(book) as books"
             );
         }
@@ -237,7 +246,7 @@ namespace BooxBox.DataAccess.Repositories
                 userId,
                 limit,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:LIKES]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[:PART_OF]-(box:Box) " +
-                "WHERE box.status = 0 and box.publisherId <> user.userId " +
+                "WHERE box.status = 0 and box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
                 "RETURN box, collect(book) as books"
             );
         }
@@ -256,7 +265,7 @@ namespace BooxBox.DataAccess.Repositories
                 userId,
                 limit,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:LIKES]-(:Box)-[:PUBlISHED]-(publisher:User)-[:PUBlISHED]-(box:Box)-[:PART_OF]-(book:Book) " +
-                "WHERE box.status = 0 AND box.publisherId <> user.userId " +
+                "WHERE box.status = 0 AND box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
                 "RETURN box, collect(book) as books"
             );
         }
@@ -274,9 +283,34 @@ namespace BooxBox.DataAccess.Repositories
                 userId,
                 limit,
                 $"MATCH (book:Book)-[:PART_OF]-(box:Box)-[:PUBlISHED]-(publisher:User)-[:LIKES]-(myBox:Box) " +
-                $"WHERE myBox.publisherId = '{userId}' AND box.status = 0 " +
+                $"MATCH (user:User{{userId: '{userId}'}}) " +
+                $"WHERE myBox.publisherId = '{userId}' AND box.status = 0 AND NOT (user)-[:READ]->(box) " +
                 "RETURN box, collect(book) AS books"
             );
+        }
+
+        private async Task MarkAllBoxesAsync(string userId, IEnumerable<Box> boxes)
+        {
+            foreach (Box box in boxes)
+            {
+                await MarkBoxAsync(userId, box);
+            }
+        }
+
+        private async Task MarkBoxAsync(string userId, Box box)
+        {
+            try
+            {
+                IResultCursor cursor = await _database.Session.RunAsync(
+                    $"MATCH (user:User {{userId: '{userId}'}}),(box:Box {{boxId: '{box.Id}'}}) " +
+                    "MERGE (user)-[r:READ]->(box)"
+                );
+                await cursor.ConsumeAsync();
+            }
+            finally
+            {
+                await _database.CloseSessionAsync();
+            }
         }
     }
 }
