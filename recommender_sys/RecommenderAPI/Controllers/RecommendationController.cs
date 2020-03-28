@@ -31,22 +31,20 @@ namespace BookzBox.Controllers
         /// This value should be < 0 (negative) if no location data is provided.
         /// </param>
         /// <param name="limit">The maximum amount of boxes to fetch.</param>
-        /// <param name="mark">Mark the recommended boxes as read?</param>
         /// <returns>A list of recommended boxes.</returns>
         [HttpGet("api/recommendations")]
         public async Task<ActionResult<IEnumerable<Box>>> FetchRecommendationsAsync(
             [Required]string userId,
             [Required]double latitude,
             [Required]double longitude,
-            [Required]int limit,
-            bool mark)
+            [Required]int limit)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
 
-            return Ok(await _recommenderRepo.FetchRecommendationsAsync(userId, limit, latitude, longitude, mark));
+            return Ok(await _recommenderRepo.FetchRecommendationsAsync(userId, limit, latitude, longitude));
         }
     }
 }

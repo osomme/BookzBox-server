@@ -43,8 +43,7 @@ namespace BooxBox.DataAccess.Repositories
             string userId,
             int limit,
             double latitude,
-            double longitude,
-            bool mark)
+            double longitude)
         {
             List<Tuple<int, Box>> weight_box = new List<Tuple<int, Box>>();
 
@@ -55,10 +54,9 @@ namespace BooxBox.DataAccess.Repositories
             weight_box.AddRange(GetBoxesAsTuples(await FetchBoxesFromOthersLikes(userId, limit), VERY_LOW_IMPORTANCE));
 
             var recommendations = GetHighestWeightedBoxes(weight_box, latitude, longitude).Take(limit);
-            if (mark)
-            {
-                await MarkAllBoxesAsync(userId, recommendations);
-            }
+
+            await MarkAllBoxesAsync(userId, recommendations);
+
             return recommendations;
         }
 

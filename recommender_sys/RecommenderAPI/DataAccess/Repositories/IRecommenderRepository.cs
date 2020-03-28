@@ -10,7 +10,6 @@ namespace BooxBox.DataAccess.Repositories
             string userId,
             int limit,
             double latitude,
-            double longitude,
-            bool mark);
+            double longitude);
     }
 }
