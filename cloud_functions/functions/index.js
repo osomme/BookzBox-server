@@ -32,7 +32,7 @@ exports.onBoxUploaded = functions.firestore
             .set(boxToProfileBoxItem(box));
         // Add mapped box to box feed collection
         const boxFeed = boxFeedRef.doc(boxId).set(boxToFeedBoxItem(box));
-        uploadBoxToRecommendationSys(boxToFeedBoxItemWithId(boxId, box));
+        uploadBoxToRecommendationSys(boxToRecommendationItems(boxId, box));
 
         return Promise.all([mapBoxes, userBoxes, boxFeed]);
     });
@@ -449,7 +449,7 @@ function boxToFeedBoxItem(box) {
     };
 }
 
-function boxToFeedBoxItemWithId(id, box) {
+function boxToRecommendationItems(id, box) {
     return {
         id: id,
         publisher: box.publisher,
@@ -460,9 +460,11 @@ function boxToFeedBoxItemWithId(id, box) {
         title: box.title,
         description: box.description,
         books: box.books.map(b => {
-            return {
-                thumbnailUrl: b.thumbnailUrl,
-                categories: b.categories
+            if (b.categories.length > 0 && b.thumbnailUrl !== null && b.thumbnailUrl !== undefined) {
+                return {
+                    thumbnailUrl: b.thumbnailUrl,
+                    categories: b.categories
+                }
             }
         })
     };
@@ -470,9 +472,7 @@ function boxToFeedBoxItemWithId(id, box) {
 
 function uploadBoxToRecommendationSys(boxFeedItem) {
     request.post({
-        headers: {
-            'content-type': 'application/json'
-        },
+        headers: { 'content-type': 'application/json' },
         url: recommenderApiUrl + 'box?key=' + recommenderApiKey,
         body: JSON.stringify(boxFeedItem)
     }, function (error, response, body) {
@@ -511,12 +511,12 @@ function likeBoxInRecommendationSys(boxId, userId) {
  * @param {Array} subjects An array of book subjects 
  */
 function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
+    jsonData = JSON.stringify("Subjects:" + subjects);
+    console.log('Updating prefered subjects with body = ' + jsonData);
     request.put({
-        headers: {
-            'content-type': 'application/json'
-        },
+        headers: { 'content-type': 'application/json' },
         url: recommenderApiUrl + 'preferences?key=' + recommenderApiKey + '&userId=' + userId,
-        body: "Subjects:" + subjects
+        body: jsonData
     }, function (error, response, body) {
         if (error) {
             return console.error(`Failed to update user preferences in recommender system: ${error}`);
