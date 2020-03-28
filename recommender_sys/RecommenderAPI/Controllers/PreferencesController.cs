@@ -46,7 +46,7 @@ namespace BookzBox.Controllers
                 return Forbid();
             }
 
-            await _preferencesRepo.UpdatePrefferedSubjectsAsync(userId, preferences.Subjects);
+            await _preferencesRepo.UpdatePrefferedSubjectsAsync(userId, SubjectMapper.ToStringArray(preferences.Subjects));
 
             return Ok();
         }

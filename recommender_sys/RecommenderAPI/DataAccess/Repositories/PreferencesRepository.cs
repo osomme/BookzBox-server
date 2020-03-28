@@ -71,7 +71,7 @@ public class PreferencesRepository : BaseRepository, IPreferencesRepository
         try
         {
             IResultCursor cursor = await _database.Session.RunAsync(
-                $"MATCH (u:User {{userId: '{userId}'}}),(s:Subject {{name: '{subject}'}}) MERGE (u)-[:PREFERS]-(s)"
+                $"MATCH (u:User {{userId: '{userId}'}}),(s:Subject {{name: '{subject.ToLower().Trim()}'}}) MERGE (u)-[:PREFERS]-(s)"
                 );
             await cursor.ConsumeAsync();
         }
