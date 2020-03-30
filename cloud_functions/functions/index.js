@@ -38,6 +38,16 @@ exports.onBoxUploaded = functions.firestore
     });
 
 /**
+ * Listens for user addition.
+ */
+exports.onUserAdded = functions.firestore
+    .document('/users/{user}')
+    .onCreate((snapshot, _) => {
+        addUserToRecommenderSys(snapshot.id);
+        return Promise.resolve();
+    });
+
+/**
  * Listens for a deletion on the main box collection and deletes
  * the box in all locations.
  */
@@ -478,7 +488,7 @@ function uploadBoxToRecommendationSys(boxFeedItem) {
         body: JSON.stringify(boxFeedItem)
     }, function (error, response, body) {
         if (error) {
-            return console.error('Uploading box to recommender system failed: ', err);
+            return console.error(`Uploading box to recommender system failed: ${error}`);
         }
         return console.log('Uploaded box to recommedner system.');
     });
@@ -524,6 +534,21 @@ function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
             return console.error(`Failed to update user preferences in recommender system: ${error}`);
         }
         return console.log('Uploaded new user preferences to recommender system.');
+    });
+}
+
+function addUserToRecommenderSys(userId) {
+    userJSON = { Id: userId };
+    userString = JSON.stringify(userJSON);
+    request.post({
+        headers: { 'content-type': 'application/json' },
+        url: recommenderApiUrl + 'users?key=' + recommenderApiKey,
+        body: userString
+    }, function (error, response, body) {
+        if (error) {
+            return console.error(`Uploading user(${userId}) to recommender system failed: ${error}`);
+        }
+        return console.log(`Uploaded user (${userId}) to recommedner system.`);
     });
 }
 
