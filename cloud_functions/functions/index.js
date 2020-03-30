@@ -50,10 +50,11 @@ exports.deleteBox = functions.firestore
         const mapBoxes = mapBoxesRef.doc(boxId).delete();
         const userBoxes = usersRef.doc(box.publisher).collection('boxes').doc(boxId).delete();
         const feedBoxes = boxFeedRef.doc(boxId).delete();
+        const likes = likesRef.where('boxId', '==', boxId).get().then(likes => likes.forEach(like => like.ref.delete()));
 
         deleteBoxInRecommenderys(boxId);
 
-        return Promise.all([mapBoxes, userBoxes, feedBoxes]);
+        return Promise.all([mapBoxes, userBoxes, feedBoxes, likes]);
     });
 
 /**
