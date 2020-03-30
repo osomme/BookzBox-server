@@ -320,8 +320,7 @@ namespace BooxBox.DataAccess.Repositories
             return await FetchBoxesAsync(
                 userId,
                 $"MATCH (book:Book)-[:PART_OF]-(box:Box) " +
-                $"MATCH (user:User{{userId: '{userId}'}}) " +
-                $"WHERE box.status = 0 AND NOT (user)-[:READ]->(box) AND box.publishedOn > {((DateTimeOffset)DateTime.UtcNow.AddDays(-30)).ToUnixTimeMilliseconds()} " +
+                $"WHERE NOT box.publisherId = '{userId}' AND box.status = 0 AND box.publishedOn > {((DateTimeOffset)DateTime.UtcNow.AddDays(-30)).ToUnixTimeMilliseconds()} " +
                 $"RETURN box, collect(book) AS books LIMIT {limit}"
          );
         }
