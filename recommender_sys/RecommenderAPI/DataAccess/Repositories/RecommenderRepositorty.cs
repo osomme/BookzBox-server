@@ -209,7 +209,7 @@ namespace BooxBox.DataAccess.Repositories
                 userId,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:PUBlISHED]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[:PART_OF]-(box:Box) " +
                 "WHERE box.status = 0 AND box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
-                "RETURN box, collect(book) as books, collect(s) as subjects LIMIT {limit}"
+                $"RETURN box, collect(book) as books, collect(s) as subjects LIMIT {limit}"
             );
         }
 
@@ -228,7 +228,7 @@ namespace BooxBox.DataAccess.Repositories
                 userId,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:PREFERS]-(s:Subject)-[:IN_BOOK]-(book:Book)-[:PART_OF]-(box:Box) " +
                 "WHERE box.status = 0 and box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
-                "RETURN box, collect(book) as books LIMIT {limit}"
+                $"RETURN box, collect(book) as books LIMIT {limit}"
             );
         }
 
@@ -247,7 +247,7 @@ namespace BooxBox.DataAccess.Repositories
                 userId,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:LIKES]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[:PART_OF]-(box:Box) " +
                 "WHERE box.status = 0 and box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
-                "RETURN box, collect(book) as books LIMIT {limit}"
+                $"RETURN box, collect(book) as books LIMIT {limit}"
             );
         }
 
@@ -265,7 +265,7 @@ namespace BooxBox.DataAccess.Repositories
                 userId,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:LIKES]-(:Box)-[:PUBlISHED]-(publisher:User)-[:PUBlISHED]-(box:Box)-[:PART_OF]-(book:Book) " +
                 "WHERE box.status = 0 AND box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
-                "RETURN box, collect(book) as books LIMIT {limit}"
+                $"RETURN box, collect(book) as books LIMIT {limit}"
             );
         }
 
@@ -283,7 +283,7 @@ namespace BooxBox.DataAccess.Repositories
                 $"MATCH (book:Book)-[:PART_OF]-(box:Box)-[:PUBlISHED]-(publisher:User)-[:LIKES]-(myBox:Box) " +
                 $"MATCH (user:User{{userId: '{userId}'}}) " +
                 $"WHERE myBox.publisherId = '{userId}' AND box.status = 0 AND NOT (user)-[:READ]->(box) " +
-                "RETURN box, collect(book) AS books LIMIT {limit}"
+                $"RETURN box, collect(book) AS books LIMIT {limit}"
             );
         }
 
