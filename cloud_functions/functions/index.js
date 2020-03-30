@@ -118,7 +118,7 @@ exports.onUserUpdate = functions.firestore
     .document('/users/{user}')
     .onUpdate((change, _) => {
         const userId = change.after.id;
-        const subjects = change.after.favoriteGenres;
+        const subjects = change.after.data().favoriteGenres;
 
         updatePreferedSubjectsInRecommendationSys(userId, subjects);
         return Promise.resolve();
@@ -512,12 +512,13 @@ function likeBoxInRecommendationSys(boxId, userId) {
  * @param {Array} subjects An array of book subjects 
  */
 function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
-    jsonData = JSON.stringify("Subjects:" + subjects);
-    console.log('Updating prefered subjects with body = ' + jsonData);
+    var jsonSubjects = { subjects: JSON.parse(subjects) };
+    var subjectString = JSON.stringify(jsonSubjects);
+    console.log('Updating prefered subjects to: ' + subjectString);
     request.put({
         headers: { 'content-type': 'application/json' },
         url: recommenderApiUrl + 'preferences?key=' + recommenderApiKey + '&userId=' + userId,
-        body: jsonData
+        body: subjectString
     }, function (error, response, body) {
         if (error) {
             return console.error(`Failed to update user preferences in recommender system: ${error}`);
