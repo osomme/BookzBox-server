@@ -73,7 +73,7 @@ namespace BooxBox.DataAccess.Repositories
             try
             {
                 IResultCursor cursor = await _database.Session.RunAsync(
-                    $"MERGE (b:Box {{ boxId: '{box.Id}', publisherId: '{box.publisher}', publishedOn: {box.publishDateTime}, title: '{box.Title}', description: '{box.Description}', lat: {(box.Latitude <= 0 ? 0.1 : box.Latitude)}, lng: {(box.Longitude <= 0 ? 0.1 : box.Longitude)}, status: {(int)box.Status}}})"
+                    $"MERGE (b:Box {{ boxId: '{box.Id}', publisherId: '{box.publisher}', publishedOn: {box.publishDateTime}, title: '{box.Title}', description: '{box.Description}', lat: {box.Latitude}, lng: {box.Longitude}, status: {(int)box.Status}}})"
                 );
                 await cursor.ConsumeAsync();
             }
