@@ -1,9 +1,10 @@
+using System;
 using System.Threading.Tasks;
 using Neo4j.Driver;
 
 namespace BooxBox.DataAccess
 {
-    public class Database : IDatabase
+    public class Database : IDatabase, IDisposable
     {
         private static string DB_URI = "bolt://localhost:7687";
         private static string DB_NAME = "neo4j";
@@ -42,6 +43,11 @@ namespace BooxBox.DataAccess
         {
             await _session.CloseAsync();
             _hasOpenSession = false;
+        }
+
+        public void Dispose()
+        {
+            _driver?.Dispose();
         }
     }
 }
