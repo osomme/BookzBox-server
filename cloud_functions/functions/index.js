@@ -344,16 +344,21 @@ exports.onTradeRequestChanged = functions.firestore
 
         const username = await usersRef.doc(tradeReq.offerRecipientId).get().then(doc => doc.data().displayName);
 
+        // Only check if both are accepted when the updated offer is accepted. Set to useless promise to start with.
+        let checkIfBothAccepted = Promise.resolve(true);
         let eventType;
         if (tradeReq.status === 0) {
+            console.log(`[TRADE COMPLETION CHECK] Trade offer in match ${matchId} updated with ACCEPTED status`);
             eventType = 'accepted';
+            // Since offer was accepted, check if both users have an accepted offer.
+            checkIfBothAccepted = checkIfTradeIsComplete(matchId);
         } else if (tradeReq.status === 1) {
             eventType = 'rejected';
         } else {
             eventType = 'unknown';
         }
 
-        return usersRef.doc(tradeReq.offerByUserId).collection('activity').add({
+        const addNotification = usersRef.doc(tradeReq.offerByUserId).collection('activity').add({
             read: false,
             typename: 'trade',
             timestamp: tradeReq.timestamp,
@@ -363,7 +368,32 @@ exports.onTradeRequestChanged = functions.firestore
                 matchId: matchId
             }
         });
+
+        return Promise.all([addNotification, checkIfBothAccepted]);
     });
+
+
+/**
+ * Checks if a match has two accepted trade offers, meaning that the trade is
+ * complete and match will be marked as no longer active.
+ * @param {String} matchId The ID of the match that is to be checked
+ */
+async function checkIfTradeIsComplete(matchId) {
+    const acceptedOffers = await matchRef.doc(matchId)
+        .collection("trade_offers")
+        .where("status", "==", 0)
+        .get();
+    console.log(`[TRADE COMPLETION CHECK] Number of accepted trade offers: ${acceptedOffers.docs.length}`);
+    if (acceptedOffers.docs.length >= 2) {
+        console.log(`[TRADE COMPLETION CHECK] Match with ID ${matchId} is complete`);
+        // Trade is complete and the match is therefore no longer active.
+        return matchRef.doc(matchId).set({
+            active: false
+        }, { merge: true });
+    }
+    return Promise.resolve(true);
+}
+
 
 /**
  * Triggered when a user posts a chat message.
