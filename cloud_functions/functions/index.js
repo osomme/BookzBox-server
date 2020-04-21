@@ -6,7 +6,6 @@ admin.initializeApp();
 const firestore = admin.firestore();
 const mapBoxesRef = firestore.collection('map_boxes');
 const usersRef = firestore.collection('users');
-const boxFeedRef = firestore.collection('feed_boxes');
 const likesRef = firestore.collection('likes');
 const boxesRef = firestore.collection('boxes');
 const matchRef = firestore.collection('matches');
@@ -31,7 +30,6 @@ exports.onBoxUploaded = functions.firestore
             .doc(boxId)
             .set(boxToProfileBoxItem(box));
         // Add mapped box to box feed collection
-        const boxFeed = boxFeedRef.doc(boxId).set(boxToFeedBoxItem(box));
         uploadBoxToRecommendationSys(boxToRecommendationItems(boxId, box));
 
         return Promise.all([mapBoxes, userBoxes, boxFeed]);
@@ -51,7 +49,7 @@ exports.onUserAdded = functions.firestore
  * Listens for a deletion on the main box collection and deletes
  * the box in all locations.
  */
-exports.deleteBox = functions.firestore
+exports.onBoxDeleted = functions.firestore
     .document('/boxes/{box}')
     .onDelete((snap, context) => {
         const box = snap.data();
@@ -59,7 +57,6 @@ exports.deleteBox = functions.firestore
 
         const mapBoxes = mapBoxesRef.doc(boxId).delete();
         const userBoxes = usersRef.doc(box.publisher).collection('boxes').doc(boxId).delete();
-        const feedBoxes = boxFeedRef.doc(boxId).delete();
         const likes = likesRef.where('boxId', '==', boxId).get().then(likes => likes.forEach(like => like.ref.delete()));
 
         deleteBoxInRecommenderys(boxId);
@@ -81,7 +78,6 @@ exports.onBoxUpdate = functions.firestore
 
         const mapBoxes = updateBoxStatus(mapBoxesRef.doc(boxId), boxStatus);
         const userBoxes = updateBoxStatus(usersRef.doc(publisherId).collection('boxes').doc(boxId), boxStatus);
-        const boxFeed = updateBoxStatus(boxFeedRef.doc(boxId), boxStatus);
 
         // Delete likes and activity data related to the box, if it is no longer visible.
         const likes = boxStatus !== 0 ? likesRef.where('boxId', '==', boxId).get()
@@ -386,17 +382,30 @@ async function checkIfTradeIsComplete(matchId) {
     console.log(`[TRADE COMPLETION CHECK] Number of accepted trade offers: ${acceptedOffers.docs.length}`);
     if (acceptedOffers.docs.length >= 2) {
         console.log(`[TRADE COMPLETION CHECK] Match with ID ${matchId} is complete`);
+        // Remove boxes involved in the trade.
+        const boxRemoval = acceptedOffers.docs.map(doc => setBoxAsTraded(doc.data().boxId));
         // Trade is complete and the match is therefore no longer active.
-        return matchRef.doc(matchId).set({
-            active: false
-        }, { merge: true });
+        const matchUpdate = matchRef.doc(matchId).update({ active: false });
+        return Promise.all([boxRemoval, matchUpdate]);
     }
     return Promise.resolve(true);
 }
 
 
+
 /**
- * Triggered when a user posts a chat message.
+ * Sets the status property on a box to traded (2).
+ * This function starts a chain reaction which updates 
+ * the status properties of all boxes collections as well as the external reccomender system.
+ * @param {String} boxId The ID of the box to be removed.
+ */
+function setBoxAsTraded(boxId) {
+    // status 2 represents a traded box.
+    return boxesRef.doc(boxId).update({ status: 2 });
+}
+
+/**
+ ` Triggered when a user posts a chat message.
  * Updates the activity item for a particular chat for both participants in the chat.
  */
 exports.onMessagePosted = functions.firestore
@@ -469,24 +478,6 @@ function boxToProfileBoxItem(box) {
         publishDateTime: box.publishDateTime,
         title: box.title,
         bookThumbnailUrl: box.books[0].thumbnailUrl
-    };
-}
-
-function boxToFeedBoxItem(box) {
-    return {
-        publisher: box.publisher,
-        status: box.status,
-        publishDateTime: box.publishDateTime,
-        latitude: box.latitude,
-        longitude: box.longitude,
-        title: box.title,
-        description: box.description,
-        books: box.books.map(b => {
-            return {
-                thumbnailUrl: b.thumbnailUrl,
-                categories: b.categories
-            }
-        })
     };
 }
 
