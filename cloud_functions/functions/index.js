@@ -32,7 +32,7 @@ exports.onBoxUploaded = functions.firestore
         // Add mapped box to box feed collection
         uploadBoxToRecommendationSys(boxToRecommendationItems(boxId, box));
 
-        return Promise.all([mapBoxes, userBoxes, boxFeed]);
+        return Promise.all([mapBoxes, userBoxes]);
     });
 
 /**
@@ -61,7 +61,7 @@ exports.onBoxDeleted = functions.firestore
 
         deleteBoxInRecommenderys(boxId);
 
-        return Promise.all([mapBoxes, userBoxes, feedBoxes, likes]);
+        return Promise.all([mapBoxes, userBoxes, likes]);
     });
 
 /**
@@ -86,7 +86,7 @@ exports.onBoxUpdate = functions.firestore
 
         updateBoxStatusInRecommendationSys(boxId, boxStatus);
 
-        return Promise.all([mapBoxes, userBoxes, boxFeed, likes]);
+        return Promise.all([mapBoxes, userBoxes, likes]);
     });
 
 
