@@ -126,7 +126,7 @@ exports.onUserUpdate = functions.firestore
         const userId = change.after.id;
         const subjects = change.after.data().favoriteGenres;
 
-        updatePreferedSubjectsInRecommendationSys(userId, subjects);
+        updatePreferredSubjectsInRecommendationSys(userId, subjects);
         return Promise.resolve();
     });
 
@@ -536,15 +536,22 @@ function likeBoxInRecommendationSys(boxId, userId) {
 }
 
 /**
- * Updates the prefered book subjects by passing the subjects to the
+ * Updates the preferred book subjects by passing the subjects to the
  * recommendation system API.
  * 
  * @param {String} userId The id of the user of whom to update for. 
  * @param {Array} subjects An array of book subjects 
  */
-function updatePreferedSubjectsInRecommendationSys(userId, subjects) {
-    var jsonSubjects = { subjects: JSON.parse(subjects) };
-    var subjectString = JSON.stringify(jsonSubjects);
+function updatePreferredSubjectsInRecommendationSys(userId, subjects) {
+    var jsonSubjects;
+    if (subjects === null || subjects === "") {
+        jsonSubjects = null;
+    } else {
+        jsonSubjects = JSON.parse(subjects);
+    }
+    var jsonSubjectsObj = { subjects: jsonSubjects };
+    var subjectString = JSON.stringify(jsonSubjectsObj);
+
     console.log('Updating prefered subjects to: ' + subjectString);
     request.put({
         headers: { 'content-type': 'application/json' },
