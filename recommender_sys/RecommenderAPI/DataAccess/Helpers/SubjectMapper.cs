@@ -5,7 +5,14 @@ static class SubjectMapper
 {
     public static string[] ToStringArray(IEnumerable<BookSubject> subjects)
     {
+
         List<string> subjectStrings = new List<string>();
+
+        if (subjects == null)
+        {
+            return subjectStrings.ToArray();
+        }
+
         foreach (var subject in subjects)
         {
             subjectStrings.Add(ToString(subject));

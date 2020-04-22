@@ -34,9 +34,9 @@ namespace BookzBox.Controllers
         public async Task<IActionResult> UpdatePreferencesAsync(
             [FromQuery] string key,
             [FromQuery][Required] string userId,
-            [FromBody][Required] Preferences preferences)
+            [FromBody] Preferences preferences)
         {
-            if (!ModelState.IsValid || preferences.Subjects.Length < 1)
+            if (!ModelState.IsValid)
             {
                 return BadRequest();
             }
@@ -46,7 +46,7 @@ namespace BookzBox.Controllers
                 return Forbid();
             }
 
-            await _preferencesRepo.UpdatePrefferedSubjectsAsync(userId, SubjectMapper.ToStringArray(preferences.Subjects));
+            await _preferencesRepo.UpdatePreferredSubjectsAsync(userId, SubjectMapper.ToStringArray(preferences?.Subjects));
 
             return Ok();
         }

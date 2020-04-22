@@ -17,7 +17,7 @@ public class PreferencesRepository : BaseRepository, IPreferencesRepository
         _subjectRepo = subjectRepo ?? throw new System.ArgumentNullException(nameof(subjectRepo));
     }
 
-    public async Task UpdatePrefferedSubjectsAsync(string userId, string[] subjects)
+    public async Task UpdatePreferredSubjectsAsync(string userId, string[] subjects)
     {
 
         if (userId is null)

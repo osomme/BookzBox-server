@@ -6,6 +6,6 @@ namespace BooxBox.DataAccess.Repositories
     public interface IPreferencesRepository : IBaseRepository
     {
 
-        public Task UpdatePrefferedSubjectsAsync(string userId, string[] subjects);
+        public Task UpdatePreferredSubjectsAsync(string userId, string[] subjects);
     }
 }
