@@ -54,14 +54,21 @@ exports.onBoxDeleted = functions.firestore
     .onDelete((snap, context) => {
         const box = snap.data();
         const boxId = snap.id;
+        console.log(`Deleting box with ID: ${boxId} created by user: ${box.publisher}`);
 
         const mapBoxes = mapBoxesRef.doc(boxId).delete();
         const userBoxes = usersRef.doc(box.publisher).collection('boxes').doc(boxId).delete();
-        const likes = likesRef.where('boxId', '==', boxId).get().then(likes => likes.forEach(like => like.ref.delete()));
+        const likes = likesRef.where('boxId', '==', boxId).get().then(likes => likes.docs.map(like => like.ref.delete()));
+        // Delete all the "x has liked your box" activity feed items in the box owner activity feed for this particular box.
+        const ownerLikeFeed = usersRef.doc(box.publisher).collection('activity')
+            .where('typename', '==', 'like')
+            .where('data.boxId', '==', boxId)
+            .get()
+            .then(l => l.docs.map(l => l.ref.delete()));
 
         deleteBoxInRecommenderys(boxId);
 
-        return Promise.all([mapBoxes, userBoxes, likes]);
+        return Promise.all([mapBoxes, userBoxes, likes, ownerLikeFeed]);
     });
 
 /**
@@ -81,7 +88,7 @@ exports.onBoxUpdate = functions.firestore
 
         // Delete likes and activity data related to the box, if it is no longer visible.
         const likes = boxStatus !== 0 ? likesRef.where('boxId', '==', boxId).get()
-            .then(likes => likes.forEach(like => like.ref.delete())) : Promise.resolve();
+            .then(likes => likes.docs.map(like => like.ref.delete())) : Promise.resolve();
 
 
         updateBoxStatusInRecommendationSys(boxId, boxStatus);
@@ -284,12 +291,17 @@ exports.onLikeDeleted = functions.firestore
         console.log(`[DELETING LIKE] liked by: ${likedById}, boxId: ${boxId}`);
 
         const box = await boxesRef.doc(boxId).get();
-        const boxOwnerId = box.data().publisher;
-        const userActivityFeed = usersRef
-            .doc(boxOwnerId)
-            .collection('activity')
-            .doc(snapshot.data().activityFeedReference)
-            .delete();
+        let ownerActivityFeed = Promise.resolve();
+        // The box could be deleted before the like is removed. Check if it exists.
+        // Deletion of owner activity feed reference is handled in onBoxDeleted trigger. This is for update of box status.
+        if (box.exists) {
+            const boxOwnerId = box.data().publisher;
+            ownerActivityFeed = usersRef
+                .doc(boxOwnerId)
+                .collection('activity')
+                .doc(snapshot.data().activityFeedReference)
+                .delete();
+        }
 
         const userLikedFeed = usersRef
             .doc(likedById)
@@ -299,7 +311,7 @@ exports.onLikeDeleted = functions.firestore
 
         deleteLikeInRecommenderSys(likedById, boxId);
 
-        return Promise.all([userActivityFeed, userLikedFeed]);
+        return Promise.all([ownerActivityFeed, userLikedFeed]);
     });
 
 
@@ -376,8 +388,8 @@ exports.onTradeRequestChanged = functions.firestore
  */
 async function checkIfTradeIsComplete(matchId) {
     const acceptedOffers = await matchRef.doc(matchId)
-        .collection("trade_offers")
-        .where("status", "==", 0)
+        .collection('trade_offers')
+        .where('status', '==', 0)
         .get();
     console.log(`[TRADE COMPLETION CHECK] Number of accepted trade offers: ${acceptedOffers.docs.length}`);
     if (acceptedOffers.docs.length >= 2) {
