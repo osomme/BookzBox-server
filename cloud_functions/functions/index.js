@@ -393,17 +393,39 @@ async function checkIfTradeIsComplete(matchId) {
         .get();
     console.log(`[TRADE COMPLETION CHECK] Number of accepted trade offers: ${acceptedOffers.docs.length}`);
     if (acceptedOffers.docs.length >= 2) {
+        // Trade is complete.
         console.log(`[TRADE COMPLETION CHECK] Match with ID ${matchId} is complete`);
         // Remove boxes involved in the trade.
         const boxRemoval = acceptedOffers.docs.map(doc => setBoxAsTraded(doc.data().boxId));
         // Trade is complete and the match is therefore no longer active.
         const matchUpdate = matchRef.doc(matchId).update({ active: false });
-        return Promise.all([boxRemoval, matchUpdate]);
+        // Increment the completed trades counter for both users.
+        const incTradeCounters = matchRef.doc(matchId).get()
+            .then(m => m.data().participants.map(uid => incrementTradedCounter(uid)));
+
+        return Promise.all([boxRemoval, matchUpdate, incTradeCounters]);
     }
     return Promise.resolve(true);
 }
 
-
+/**
+ * Increments the 'tradeCount' property of the user passed in the parameter.
+ * @param {String} userId The ID of the user who's counter is being incremented.
+ */
+async function incrementTradedCounter(userId) {
+    return usersRef.doc(userId).get().then(user => {
+        if (user.exists) {
+            const count = user.data().tradeCount || 0;
+            const updatedCount = count + 1;
+            console.log(`Incrementing trade counter from ${count} to ${updatedCount} for user: ${userId}`);
+            return usersRef.doc(userId).update({
+                tradeCount: updatedCount
+            });
+        }
+        console.log(`Attempted to increment count for user ${userId} but the user could not be found`);
+        return Promise.resolve();
+    });
+}
 
 /**
  * Sets the status property on a box to traded (2).
