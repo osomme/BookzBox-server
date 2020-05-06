@@ -40,7 +40,7 @@ namespace BooxBox.DataAccess.Repositories
             {
                 IResultCursor cursor = await _database.Session.RunAsync(
 
-                        $"MATCH (b:Book {{thumbnailUrl: '{book.ThumbnailUrl}'}}),(s:Subject {{name: '{subject.ToLower().Trim()}'}}) MERGE (s)-[r:IN_BOOK]->(b)"
+                        $"MATCH (b:Book {{isbn: '{book.Isbn}'}}),(s:Subject {{name: '{subject.ToLower().Trim()}'}}) MERGE (s)-[r:IN_BOOK]->(b)"
 
                 );
                 await cursor.ConsumeAsync();

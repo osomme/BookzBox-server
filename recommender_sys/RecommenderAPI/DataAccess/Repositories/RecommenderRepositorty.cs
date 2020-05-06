@@ -58,9 +58,9 @@ namespace BooxBox.DataAccess.Repositories
                 weight_box.AddRange(GetBoxesAsTuples(await FetchFallbackBoxes(userId, limit), 0));
             }
 
-            var recommendations = GetHighestWeightedBoxes(weight_box, latitude, longitude).Take(limit);
+            var recommendations = GetHighestWeightedBoxes(weight_box, latitude, longitude).Take(limit).ToList();
 
-            await MarkAllBoxesAsync(userId, recommendations);
+            //await MarkAllBoxesAsync(userId, recommendations);
 
             return recommendations;
         }
@@ -177,7 +177,7 @@ namespace BooxBox.DataAccess.Repositories
             return GIS.DistanceHaversine(lat1, lng1, lat2, lng2, UnitSystem.SI);
         }
 
-        private async Task<IEnumerable<Box>> FetchBoxesAsync(string userId, string query)
+        private async Task<IEnumerable<Box>> FetchBoxesAsync(string query)
         {
             List<Box> result = null;
             try
@@ -206,7 +206,6 @@ namespace BooxBox.DataAccess.Repositories
         private async Task<IEnumerable<Box>> FetchBoxesWithSubjectsMatchingThoseOfMyBoxes(string userId, int limit)
         {
             return await FetchBoxesAsync(
-                userId,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:PUBlISHED]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[:PART_OF]-(box:Box) " +
                 "WHERE box.status = 0 AND box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
                 $"RETURN box, collect(book) as books, collect(s) as subjects LIMIT {limit}"
@@ -225,7 +224,6 @@ namespace BooxBox.DataAccess.Repositories
         private async Task<IEnumerable<Box>> FetchBoxesWithSubjectsMatchingPreferences(string userId, int limit)
         {
             return await FetchBoxesAsync(
-                userId,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:PREFERS]-(s:Subject)-[:IN_BOOK]-(book:Book)-[:PART_OF]-(box:Box) " +
                 "WHERE box.status = 0 and box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
                 $"RETURN box, collect(book) as books LIMIT {limit}"
@@ -244,7 +242,6 @@ namespace BooxBox.DataAccess.Repositories
         private async Task<IEnumerable<Box>> FetchBoxesWithSubjectsMatchingLikedBoxes(string userId, int limit)
         {
             return await FetchBoxesAsync(
-                userId,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:LIKES]-(:Box)-[:PART_OF]-(:Book)-[:HAS_SUBJECT]-(s:Subject)-[:IN_BOOK]->(book:Book)-[:PART_OF]-(box:Box) " +
                 "WHERE box.status = 0 and box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
                 $"RETURN box, collect(book) as books LIMIT {limit}"
@@ -262,7 +259,6 @@ namespace BooxBox.DataAccess.Repositories
         private async Task<IEnumerable<Box>> FetchBoxesFromMyLikes(string userId, int limit)
         {
             return await FetchBoxesAsync(
-                userId,
                 $"MATCH (user:User {{userId: '{userId}'}})-[:LIKES]-(:Box)-[:PUBlISHED]-(publisher:User)-[:PUBlISHED]-(box:Box)-[:PART_OF]-(book:Book) " +
                 "WHERE box.status = 0 AND box.publisherId <> user.userId AND NOT (user)-[:READ]->(box) " +
                 $"RETURN box, collect(book) as books LIMIT {limit}"
@@ -279,7 +275,6 @@ namespace BooxBox.DataAccess.Repositories
         private async Task<IEnumerable<Box>> FetchBoxesFromOthersLikes(string userId, int limit)
         {
             return await FetchBoxesAsync(
-                userId,
                 $"MATCH (book:Book)-[:PART_OF]-(box:Box)-[:PUBlISHED]-(publisher:User)-[:LIKES]-(myBox:Box) " +
                 $"MATCH (user:User{{userId: '{userId}'}}) " +
                 $"WHERE myBox.publisherId = '{userId}' AND box.status = 0 AND NOT (user)-[:READ]->(box) " +
@@ -312,16 +307,15 @@ namespace BooxBox.DataAccess.Repositories
         }
 
         /// <summary>
-        /// Retreives boxes that a user has not previously read, where the status is public
-        /// and that is newer than 30 days.
+        /// Retreives limit amount of boxes that the user has not published. These boxes are 
+        /// ordered by publish date fetching the most recent first.
         /// </summary>
         private async Task<IEnumerable<Box>> FetchFallbackBoxes(string userId, int limit)
         {
             return await FetchBoxesAsync(
-                userId,
                 $"MATCH (book:Book)-[:PART_OF]-(box:Box) " +
-                $"WHERE NOT box.publisherId = '{userId}' AND box.status = 0 AND box.publishedOn > {((DateTimeOffset)DateTime.UtcNow.AddDays(-30)).ToUnixTimeMilliseconds()} " +
-                $"RETURN box, collect(book) AS books LIMIT {limit}"
+                $"WHERE NOT box.publisherId = '{userId}' AND box.status = 0 " +
+                $"RETURN box, collect(book) AS books ORDER BY box.publishedOn DESC LIMIT {limit} "
          );
         }
     }

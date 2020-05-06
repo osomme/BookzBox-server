@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Models;
 using Neo4j.Driver;
@@ -39,7 +40,7 @@ namespace BooxBox.DataAccess.Repositories
             {
                 IResultCursor cursor = await _database.Session.RunAsync(
 
-                        $"MATCH (book:Book {{thumbnailUrl: '{book.ThumbnailUrl}'}}),(box:Box {{boxId: '{box.Id}'}}) " +
+                        $"MATCH (book:Book {{isbn: '{book.Isbn}'}}),(box:Box {{boxId: '{box.Id}'}}) " +
                         "MERGE (book)-[:PART_OF]-(box)"
 
                 );
@@ -57,7 +58,7 @@ namespace BooxBox.DataAccess.Repositories
             {
                 IResultCursor cursor = await _database.Session.RunAsync(
 
-                        $"MATCH (b:Book {{thumbnailUrl: '{book.ThumbnailUrl}'}}),(s:Subject {{name: '{subject}'}}) MERGE (b)-[r:HAS_SUBJECT]-(s)"
+                        $"MATCH (b:Book {{isbn: '{book.Isbn}'}}),(s:Subject {{name: '{subject.ToLower().Trim()}'}}) MERGE (b)-[:HAS_SUBJECT]-(s)"
 
                 );
                 await cursor.ConsumeAsync();
@@ -74,7 +75,7 @@ namespace BooxBox.DataAccess.Repositories
             {
                 string subjectsJson = JsonConvert.SerializeObject(book.Categories);
                 IResultCursor cursor = await _database.Session.RunAsync(
-                    $"MERGE (b:Book {{thumbnailUrl: '{book.ThumbnailUrl}', subjects: '{subjectsJson}'}})"
+                    $"MERGE (b:Book {{isbn: '{book.Isbn}', thumbnailUrl: '{book.ThumbnailUrl}', subjects: '{subjectsJson}'}})"
                 );
                 await cursor.ConsumeAsync();
             }
