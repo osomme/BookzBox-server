@@ -492,8 +492,9 @@ function boxToRecommendationItems(id, box) {
         title: box.title,
         description: box.description,
         books: box.books.map(b => {
-            if (b.categories.length > 0 && b.thumbnailUrl !== null && b.thumbnailUrl !== undefined) {
+            if (b.categories.length > 0) {
                 return {
+                    isbn: b.isbn13,
                     thumbnailUrl: b.thumbnailUrl,
                     categories: b.categories
                 }
@@ -544,7 +545,7 @@ function likeBoxInRecommendationSys(boxId, userId) {
  */
 function updatePreferredSubjectsInRecommendationSys(userId, subjects) {
     var jsonSubjects;
-    if (subjects === null || subjects === "") {
+    if (!subjects) {
         jsonSubjects = null;
     } else {
         jsonSubjects = JSON.parse(subjects);
