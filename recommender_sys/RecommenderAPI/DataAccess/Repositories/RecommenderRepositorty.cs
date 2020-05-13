@@ -10,13 +10,16 @@ namespace BooxBox.DataAccess.Repositories
 {
     public class RecommenderRepository : BaseRepository, IRecommenderRepository
     {
-        private static int VERY_HIGH_IMPORTANCE = 8;
-        private static int HIGH_IMPORTANCE = 7;
-        private static int MEDIUM_IMPORTANCE = 4;
-        private static int LOW_IMPORTANCE = 2;
-        private static int VERY_LOW_IMPORTANCE = 1;
-        private static int NO_IMPORTANCE = -MEDIUM_IMPORTANCE;
-        private static int IRRELEVANT_IMPORTANCE = -VERY_HIGH_IMPORTANCE;
+        private const int VERY_HIGH_IMPORTANCE = 8;
+        private const int HIGH_IMPORTANCE = 7;
+        private const int MEDIUM_IMPORTANCE = 4;
+        private const int LOW_IMPORTANCE = 2;
+        private const int VERY_LOW_IMPORTANCE = 1;
+        private const int NO_IMPORTANCE = -MEDIUM_IMPORTANCE;
+        private const int IRRELEVANT_IMPORTANCE = -VERY_HIGH_IMPORTANCE;
+
+        private const double LARGE_AREA = 4.0;
+        private const double SMALL_AREA = 1.0;
 
         private readonly IBoxRecordMapper _boxMapper;
 
@@ -55,12 +58,12 @@ namespace BooxBox.DataAccess.Repositories
 
             if (weight_box.Count < limit)
             {
-                weight_box.AddRange(GetBoxesAsTuples(await FetchFallbackBoxes(userId, limit), 0));
+                weight_box.AddRange(GetBoxesAsTuples(await FetchFallbackBoxes(userId, limit - weight_box.Count, latitude, longitude), NO_IMPORTANCE));
             }
 
             var recommendations = GetHighestWeightedBoxes(weight_box, latitude, longitude).Take(limit).ToList();
 
-            //await MarkAllBoxesAsync(userId, recommendations);
+            await MarkAllBoxesAsync(userId, recommendations);
 
             return recommendations;
         }
@@ -154,11 +157,11 @@ namespace BooxBox.DataAccess.Repositories
         {
             double distanceKM = CalculateDistance(box.Latitude, box.Longitude, latitude, longitude);
 
-            if (distanceKM > 100)
+            if (distanceKM > 120)
             {
                 return NO_IMPORTANCE;
             }
-            else if (distanceKM > 50)
+            else if (distanceKM > 60)
             {
                 return LOW_IMPORTANCE;
             }
@@ -310,13 +313,48 @@ namespace BooxBox.DataAccess.Repositories
         /// Retreives limit amount of boxes that the user has not published. These boxes are 
         /// ordered by publish date fetching the most recent first.
         /// </summary>
-        private async Task<IEnumerable<Box>> FetchFallbackBoxes(string userId, int limit)
+        private async Task<IEnumerable<Box>> FetchFallbackBoxes(
+            string userId,
+            int limit,
+            double latitude,
+            double longitude)
         {
-            return await FetchBoxesAsync(
-                $"MATCH (book:Book)-[:PART_OF]-(box:Box) " +
-                $"WHERE NOT box.publisherId = '{userId}' AND box.status = 0 " +
-                $"RETURN box, collect(book) AS books ORDER BY box.publishedOn DESC LIMIT {limit} "
-         );
+            HashSet<Box> boxes = new HashSet<Box>(await FetchBoxesInArea(userId, limit, new Area(latitude, longitude, SMALL_AREA), false));
+
+            if (boxes.Count() < limit)
+            {
+                boxes = new HashSet<Box>(boxes.Concat(await FetchBoxesInArea(userId, limit, new Area(latitude, longitude, LARGE_AREA), true)));
+            }
+            return boxes;
         }
+
+        /// <summary>
+        /// Retreives limit amount of boxes within a specified area. Boxes published by the given
+        /// user are ignored. These boxes are ordered by publish date fetching the most recent first.
+        /// </summary>
+        /// <param name="marked">Should previously marked boxes be included?</param>
+        private async Task<IEnumerable<Box>> FetchBoxesInArea(string userId, int limit, Area area, bool marked)
+        {
+            string query =
+                $"MATCH (book:Book)-[:PART_OF]-(box:Box) " +
+                $"MATCH (user:User{{userId: '{userId}'}}) " +
+                $"WHERE " +
+                $"NOT box.publisherId = '{userId}' " +
+                $"AND box.status = 0 " +
+                $"AND box.lat > {area.lat - area.d} " +
+                $"AND box.lat < {area.lat + area.d} " +
+                $"AND box.lng > {area.lng - area.d} " +
+                $"AND box.lng < {area.lng + area.d} ";
+
+            if (!marked)
+            {
+                query += $"AND NOT (user)-[:READ]->(box) ";
+            }
+
+            query += $"RETURN box, collect(book) AS books ORDER BY box.publishedOn DESC LIMIT {limit} ";
+
+            return await FetchBoxesAsync(query);
+        }
+
     }
 }

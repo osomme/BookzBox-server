@@ -26,8 +26,18 @@ public class BoxRecordMapper : IBoxRecordMapper
         box.Title = boxDictionary.Properties["title"] as string;
         box.Description = boxDictionary.Properties["description"] as string;
         box.Status = (BoxStatus)((int)((long)boxDictionary.Properties["status"]));
-        box.Latitude = (double)boxDictionary.Properties["lat"];
-        box.Longitude = (double)boxDictionary.Properties["lng"];
+        try
+        {
+            box.Latitude = (double)boxDictionary.Properties["lat"];
+            box.Longitude = (double)boxDictionary.Properties["lng"];
+        }
+        catch (System.InvalidCastException)
+        {
+            Int64 tmpLat = (Int64)boxDictionary.Properties["lat"];
+            box.Latitude = (double)tmpLat;
+            Int64 tmpLng = (Int64)boxDictionary.Properties["lng"];
+            box.Longitude = (double)tmpLng;
+        }
 
         // MAP BOOKS
         box.Books = _bookMapper.MapAll(record).ToArray();
