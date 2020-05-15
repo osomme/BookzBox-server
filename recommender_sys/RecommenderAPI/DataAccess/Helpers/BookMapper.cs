@@ -10,6 +10,7 @@ public class BookMapper
     {
         Book book = new Book();
 
+        book.Isbn = node.Properties["isbn"] as string;
         book.ThumbnailUrl = node.Properties["thumbnailUrl"] as string;
         book.Categories = parseSubjects(node.Properties["subjects"] as string);
 
