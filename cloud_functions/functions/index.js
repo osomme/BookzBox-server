@@ -525,15 +525,11 @@ function boxToRecommendationItems(id, box) {
         longitude: box.longitude,
         title: box.title,
         description: box.description,
-        books: box.books.map(b => {
-            if (b.categories.length > 0) {
-                return {
-                    isbn: b.isbn13,
-                    thumbnailUrl: b.thumbnailUrl,
-                    categories: b.categories
-                }
-            }
-        })
+        books: box.books.map(b => ({
+            isbn: b.isbn13,
+            thumbnailUrl: b.fullSizeImageUrl,
+            categories: b.categories
+        }))
     };
 }
 
