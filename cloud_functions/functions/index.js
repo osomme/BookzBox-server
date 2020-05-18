@@ -20,7 +20,7 @@ exports.onBoxUploaded = functions.firestore
     .onCreate((snapshot, _) => {
         const box = snapshot.data();
         const boxId = snapshot.id;
-        console.log(`New box added with ID: ${boxId}, contents: ${box}`);
+        console.log(`New box added with ID: ${boxId}, contents: ${JSON.stringify(box)}`);
         // Add mapped box to map_boxes collection
         const mapBoxes = mapBoxesRef.doc(boxId)
             .set(boxToMapBoxItem(box));
@@ -109,19 +109,27 @@ exports.onLikeUploaded = functions.firestore
         const likedById = snapshot.data().likedByUserId;
         const boxId = snapshot.data().boxId;
         const timestamp = snapshot.data().timestamp;
-        console.log(`[NEW LIKE] liked by: ${likedById}, boxId: ${boxId}`);
+        console.log(`[NEW LIKE] ${JSON.stringify(snapshot.data())}`);
 
         const likedByUser = await usersRef.doc(likedById).get();
         const box = await boxesRef.doc(boxId).get();
         const boxOwnerId = box.data().publisher;
         const boxOwnerUser = await usersRef.doc(boxOwnerId).get();
-        const ownerActivityFeed = addToBoxOwnerActivityFeed(boxOwnerId, timestamp, likedById, likedByUser, box, boxId, snapshot);
-        const userLikedFeed = addToLikerActivityFeed(likedById, boxId, box, boxOwnerId);
-        const matchCheck = checkForPotentialMatch(boxOwnerId, likedById, timestamp, boxOwnerUser, likedByUser);
 
-        likeBoxInRecommendationSys(boxId, likedById);
+        // Since a user can remove a like right after adding a like and Cloud Functions are quite slow to respond to changes,
+        // check if the like still exists before going further.
+        const likeStillExists = (await likesRef.doc(snapshot.id).get()).exists;
+        if (likeStillExists) {
+            const ownerActivityFeed = addToBoxOwnerActivityFeed(boxOwnerId, timestamp, likedById, likedByUser, box, boxId, snapshot);
+            const userLikedFeed = addToLikerActivityFeed(likedById, boxId, box, boxOwnerId);
+            const matchCheck = checkForPotentialMatch(boxOwnerId, likedById, timestamp, boxOwnerUser, likedByUser);
 
-        return Promise.all([userLikedFeed, ownerActivityFeed, matchCheck]);
+            likeBoxInRecommendationSys(boxId, likedById);
+
+            return Promise.all([userLikedFeed, ownerActivityFeed, matchCheck]);
+        } else {
+            return Promise.resolve();
+        }
     });
 
 /**
@@ -235,12 +243,8 @@ async function addToBoxOwnerActivityFeed(boxOwnerId, timestamp, likedById,
                 boxId: boxId
             }
         });
-    return snapshot.ref.set({
-        // Create a reference to the activity item in the original like document.
-        // This is used when deleting the like document
+    return snapshot.ref.update({
         activityFeedReference: ref.id
-    }, {
-        merge: true
     });
 }
 
